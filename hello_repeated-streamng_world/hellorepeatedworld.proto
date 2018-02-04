@@ -1,10 +1,15 @@
 
 syntax = "proto3";
 
+// Python does not make use of .proto packages but this might be useful for
+//   other languages
 package hellorepeatedworld;
 
 // This version returns multiple greetings
-// Does this using a repeated greeting rather than streaming
+// Does this using both a repeated greeting combined with streaming
+// The repeated greetings can be used for efficiency by merging them
+//    in a common message on the wire
+// The streaming allows longer streams of messages
 
 // The greeting service definition
 service MultiGreeter {
@@ -15,7 +20,7 @@ service MultiGreeter {
 // The request message containing the user's name and how many greetings are desired
 message HelloRequest {
   string name = 1; // Name of user for personalization
-  int32 num_greetings = 2; // Number of greetings desired
+  int32 num_greetings = 2; // Number of greetings desired in total
 }
 
 // A response message containing multiple greetings

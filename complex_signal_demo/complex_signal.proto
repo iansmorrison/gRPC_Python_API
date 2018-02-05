@@ -1,0 +1,40 @@
+/*
+Demo of RPC access to a complex-valued signal
+We group samples together in a repeated field for efficiency
+   but also stream these messages to handle very large signals
+
+Programmer: David G Messerschmitt
+5 Feb 2018
+*/
+
+syntax = "proto3";
+
+// Python does not make use of .proto packages but this might be useful for
+//   other languages
+package complex_signal;
+
+// This version returns multiple greetings
+// Does this using both a repeated greeting combined with streaming
+// The repeated greetings can be used for efficiency by merging them
+//    in a common message on the wire
+// The streaming allows longer streams of messages
+
+// The greeting service definition
+service ComplexSignal {
+
+  rpc AccessSignal (SignalRequest) returns (stream Signal);
+}
+
+message Complex {
+	float real = 1;
+	float imag = 2;
+}
+
+message SignalRequest {
+  int32 num_samples = 1;
+}
+
+message Signal {
+  repeated Complex samples = 1;
+}
+

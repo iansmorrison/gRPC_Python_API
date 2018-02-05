@@ -1,0 +1,58 @@
+
+/*
+Simple demo of servce configuration and execution
+Three stages: query, request, wrapup
+Each participation reports their status
+
+Programmer: David G Messerschmitt
+5 Feb 2018
+*/
+
+syntax = "proto3";
+
+// Python does not make use of .proto packages but this might be useful for
+//   other languages
+package metadata_demo;
+
+// Demonstrate and experiment with transferring metadata
+// back and forth between client and server
+
+// The greeting service definition
+service ServiceControl {
+
+  // Request information about services supplied
+  rpc Query (QueryRequest) returns (QueryReply);
+
+  // Configurate the service
+  rpc Service (ServiceRequest) returns (ServiceStatus);
+
+  // Server reports outcomes, including error messages
+  rpc WrapUp (ClientStatus) returns (WrapUpReport);
+}
+
+
+message QueryRequest {
+  string question = 1;
+}
+
+message QueryReply {
+  string answer = 1;
+}
+
+message ServiceRequest {
+  string request = 1;
+}
+
+message ServiceStatus {
+	string report = 1;
+}
+
+message ClientStatus {
+	string report = 1;
+}
+
+message WrapUpReport {
+  string report = 1;
+}
+
+

@@ -22,15 +22,15 @@ class ServiceControl(metadata_demo_pb2_grpc.ServiceControlServicer):
     self.going = True
 
   def Query(self, request, context):
-    print('Query received: ' + request.question)
+    print('Server received: ' + request.question)
     return metadata_demo_pb2.QueryReply(answer = 'QueryReply: ' + 'A or B or C')
   
   def Service(self, request, context):
-    print('Service request received: ' + request.request)        
+    print('Server received: ' + request.request)        
     return metadata_demo_pb2.ServiceStatus(report = 'ServiceStatus: ' + 'B accomplished')
 
   def WrapUp(self, request, context):
-    print('Client status received: ' + request.report)
+    print('Server receive: ' + request.report)
     self.going = False  # stop server after response is sent
     return metadata_demo_pb2.WrapUpReport(report = 'WrapUpReport: ' + 'Waiting for another request')
 

@@ -23,11 +23,11 @@ def report(message):
 def run():
     _channel = grpc.insecure_channel(_net_connection)
     _stub = metadata_demo_pb2_grpc.ServiceControlStub(_channel)
-    _r1 = _stub.Query(query('What can you do?'))
+    _r1 = _stub.Query(query('Query: What can you do?'))
     print('Client received: ' + _r1.answer)
-    _r2 = _stub.Service(service('Do B please'))
+    _r2 = _stub.Service(service('Service: Do B please'))
     print('Client received: ' + _r2.report)
-    _r3 = _stub.WrapUp(report('B completed as I was expecting'))
+    _r3 = _stub.WrapUp(report('WrapUp: B completed as I was expecting'))
     print('Client received: ' + _r3.report)
     
 

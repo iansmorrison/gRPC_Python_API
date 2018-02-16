@@ -11,6 +11,13 @@ import metadata_demo_pb2_grpc as grpcServe
 # Configuration
 _net_connection = 'localhost:50055'
 
+# metadata is represented by a dictionary
+meta =  {
+        'QueryRequest': {'question':'Query: What can you do?'},
+        'ServiceRequest' : {'request':'Do B please'},
+        'ClientStatus' : {'report':'WrapUp: B completed as I was expecting'}
+        }
+
 def query(message):
     return grpcMessage.QueryRequest(question = message)
 

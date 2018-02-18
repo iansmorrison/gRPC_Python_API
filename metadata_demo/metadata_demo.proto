@@ -23,7 +23,7 @@ service ServiceControl {
   // Request information about services supplied
   rpc Query (QueryRequest) returns (QueryReply);
 
-  // Configurate the service
+  // Configure the service
   rpc Service (ServiceRequest) returns (ServiceStatus);
 
   // Server reports outcomes, including error messages

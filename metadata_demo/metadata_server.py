@@ -31,7 +31,7 @@ class ServiceControl(grpcServe.ServiceControlServicer):
 
   def WrapUp(self, request, context):
     print('Server receive: ' + request.report)
-    self.going = False  # stop server after response is sent
+    #self.going = False  # stop server after response is sent
     return grpcMessage.WrapUpReport(report = 'WrapUpReport: ' + 'Waiting for another request')
 
 def serve():

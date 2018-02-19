@@ -13,47 +13,60 @@ _net_connection = 'localhost:50055'
 
 # metadata is represented by a dictionary on both send and receive
 # initialize metadata dictionary
-_meta =  {
-        'QueryRequest': {'question':''},
-        'ServiceRequest' : {'request':''},
-        'ClientStatus' : {'report':''},
-        'QueryReply': {'answer':''},
-        'ServiceStatus': {'report':''},
-        'WrapUpReport': {'report':''}
+_serviceName = 'ServiceControl'
+_rcpNames = ['Query','Service','WrapUp']
+_messageFields =  {
+        'QueryRequest':     {'question' : None},
+        'ServiceRequest' :  {'request' : None},
+        'ClientStatus' :    {'report' : None},
+        'QueryReply':       {'answer' : None},
+        'ServiceStatus':    {'report' : None},
+        'WrapUpReport':     {'report' : None}
         }
+
 # note to future: would be nice to generate
 #   _meta skeleton automatically from .proto file
 
-def _message(message_type):
-    # message_type = string identifying type of message
-    return eval(
-        "grpcMessage." + message_type +
-        "(**_meta[" + "message_type" + "])"
-        )
-    
+def _message(message_name):
+    # message_name = string identifying type of message
+    cmd='grpcMessage.{0}(**_messageFields["{0}"])'.format(message_name)
+    print(cmd)
+    return eval(cmd)
+
+def _grpcRequest(rpc_name,message_name):
+    # rpc_name = string with name of service
+    # message_name = string identifying type of message
+    cmd = 'grpcMessage.{0}(**_messageFields["{0}"])'.format(message_name)
+    cmd = '_stub.{0}({1})'.format(rpc_name,cmd)
+    print(cmd)
+    return eval(cmd)
+
+  
 def run():
     _channel = grpc.insecure_channel(_net_connection)
-    _stub = grpcServe.ServiceControlStub(_channel)
+    cmd = 'grpcServe.{0}Stub(_channel)'.format(_serviceName)
+    _stub = eval(cmd)
 
     # example query of the server
-    _meta['QueryRequest']['question'] = 'What can you do?'
+    _messageFields['QueryRequest']['question'] = 'What can you do?'
     _r1 = _stub.Query(_message('QueryRequest'))
-    _meta['QueryReply']['answer'] = _r1.answer
+    #_r1 = _grpcRequest('Query','QueryRequest')
+    _messageFields['QueryReply']['answer'] = _r1.answer
 
     # example service request
-    _meta['ServiceRequest']['request'] = 'Do B please'
+    _messageFields['ServiceRequest']['request'] = 'Do B please'
     _r2 = _stub.Service(_message('ServiceRequest'))
-    _meta['ServiceStatus']['report'] = _r2.report
+    _messageFields['ServiceStatus']['report'] = _r2.report
 
     # example wrapup request
-    _meta['ClientStatus']['report'] = 'B completed as I was expecting'
+    _messageFields['ClientStatus']['report'] = 'B completed as I was expecting'
     _r3 = _stub.WrapUp(_message('ClientStatus'))
-    _meta['WrapUpReport']['report'] = _r3.report
+    _messageFields['WrapUpReport']['report'] = _r3.report
 
     # print messages back from server
-    print(_meta['QueryReply'])
-    print(_meta['ServiceStatus'])
-    print(_meta['WrapUpReport'])
+    print(_messageFields['QueryReply'])
+    print(_messageFields['ServiceStatus'])
+    print(_messageFields['WrapUpReport'])
     
 
 if __name__ == '__main__':

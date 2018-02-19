@@ -26,11 +26,12 @@ _messageFields =  {
 # note to future: would be nice to generate
 #   _meta skeleton automatically from .proto file
 
-class ClientStub():
+class GenericClientStub():
     '''
-    Establish channel and satisfy rpc requests.
-    Class not specific to any protocol buffer definition.
-    Change .proto file and this class does not require modification.
+    Establish channel and satisfy rpc requests
+    Class not specific to any protocol buffer definition, but encapsulates
+        all the grpc mechanics
+    Change .proto file and this class does not require modification
     '''
 
     def __init__(self):
@@ -50,30 +51,33 @@ class ClientStub():
         # cmd = 'self.stub.Query(cmd)'
         return eval(cmd)
 
-  
-def run():
-    s = ClientStub()
+class MetadataClient(GenericClientStub):
 
-    # example query of the server
-    _messageFields['QueryRequest']['question'] = 'What can you do?'
-    _r = s.rpcRequest('Query','QueryRequest')
-    _messageFields['QueryReply']['answer'] = _r.answer
+    def __init__(self):
+        super().__init__()
 
-    # example service request
-    _messageFields['ServiceRequest']['request'] = 'Do B please'
-    _r = s.rpcRequest('Service','ServiceRequest')
-    _messageFields['ServiceStatus']['report'] = _r.report
+    def run(self):
 
-    # example wrapup request
-    _messageFields['ClientStatus']['report'] = 'B completed as I was expecting'
-    _r = s.rpcRequest('WrapUp','ClientStatus')
-    _messageFields['WrapUpReport']['report'] = _r.report
+        # example query of the server
+        _messageFields['QueryRequest']['question'] = 'What can you do?'
+        r = self.rpcRequest('Query','QueryRequest')
+        _messageFields['QueryReply']['answer'] = r.answer
 
-    # print messages back from server
-    print(_messageFields['QueryReply'])
-    print(_messageFields['ServiceStatus'])
-    print(_messageFields['WrapUpReport'])
+        # example service request
+        _messageFields['ServiceRequest']['request'] = 'Do B please'
+        r = self.rpcRequest('Service','ServiceRequest')
+        _messageFields['ServiceStatus']['report'] = r.report
+
+        # example wrapup request
+        _messageFields['ClientStatus']['report'] = 'B completed as I was expecting'
+        r = self.rpcRequest('WrapUp','ClientStatus')
+        _messageFields['WrapUpReport']['report'] = r.report
+
+        # print messages back from server
+        print(_messageFields['QueryReply'])
+        print(_messageFields['ServiceStatus'])
+        print(_messageFields['WrapUpReport'])
     
 
 if __name__ == '__main__':
-  run()
+  MetadataClient().run()

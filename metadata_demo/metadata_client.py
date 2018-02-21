@@ -99,16 +99,17 @@ class MetadataClient(GenericClientStub):
         super().__init__()
 
     def run(self):
-
-        # example query of the server
+        # the natural ordering of rpc requests is Query, Service, WrapUP
+        
+        # first a Query
         self.messageFields['QueryRequest']['question'] = 'What services do you offer?'
         self.rpcRequest('Query')
 
-        # example service request
+        # next Service
         self.messageFields['ServiceRequest']['request'] = 'Provide B please'
         self.rpcRequest('Service')
 
-        # example wrapup request
+        # finally WrapUP
         self.messageFields['ClientStatus']['report'] = 'Service B completed as I was expecting'
         self.rpcRequest('WrapUp')
 

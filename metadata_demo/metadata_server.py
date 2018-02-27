@@ -6,6 +6,7 @@ Progammer David G Messerschmitt
 
 from concurrent import futures
 import time
+import importlib
 
 # this file contains definitions of SERVICE_NAME,
 # RPC_AND_MESSAGE_NAMES and MESSAGE_FIELDS
@@ -15,52 +16,52 @@ from PROTO_DEFINITIONS import *
 # gRPC engine
 import grpc
 
-# files compiled from the .proto file
-cmd = 'import {0}_pb2 as grpcMessage'.format(NAME_OF_PROTO_FILE)
-# Example:
-# import metadata_demo_pb2 as grpcMessage
-exec(cmd)
-cmd = 'import {0}_pb2_grpc as grpcServe'.format(NAME_OF_PROTO_FILE)
-# Example:
-# import metadata_demo_pb2_grpc as grpcServe
-exec(cmd)
+# Import gRPC-compiled modules, hiding the .proto-specific naming
+grpcMessage = importlib.import_module('{0}_pb2'.format(NAME_OF_PROTO_FILE),'SUB')
+grpcServe = importlib.import_module('{0}_pb2_grpc'.format(NAME_OF_PROTO_FILE),'SUB')
 
+# Do the same for needed attributes within the modules
+grpcServicer = getattr(grpcServe,'{0}Servicer'.format(SERVICE_NAME))
 
 # dynamically create class GenericServer that inherits from grpcServe
 #   and adds methods specific to this rpc context
-exp = 'grpcServe.{0}Servicer'.format(SERVICE_NAME)
-class GenericServer(eval(exp)):
+class GenericServer(grpcServicer):
 
   def __init__(self):
     self.going = True
     self.timeout = MAXIMUM_SERVICE_TIME_IN_MINUTES
     # copy of message fields which can be used to store messages and responses
     self.messageFields = MESSAGE_FIELDS.copy()
+    self.rcp_name = ''
     super().__init__()
 
   def intercept(self,rpc,request):
-    # intercepts incoming message on rpc, stores message on dictionary and
-    #   calls server to read message and formulate reply, which is then sent
-  
+    # intercepts incoming message via rpc, stores message on dictionary and
+    #   calls server to read message and formulate reply, then sends reply to client via rpc
+
+    print('Call to intercept: ')
+    print(request)
+    #print(rcp)
+    
     # access list of messages names for this rpc_name
-    [recd,reply] = RPC_AND_MESSAGE_NAMES[rpc]
+    [recd,send] = RPC_AND_MESSAGE_NAMES[rpc]
     
     # for each field in receive message, store received value in message dictionary
     for field in self.messageFields[recd].keys():
-      self.messageFields[recd][field] = eval('request.{0}'.format(field))
+      self.messageFields[recd][field] = getattr(request,field)
       
     # now call runtime method so it can formulate a response and store in message dictonary
     self.response(recd)
 
     # pull that response from the dictonary, assuming it has been stored there by the client
-    r = self.messageFields[reply]
+    r = self.messageFields[send]
     
     # at this point it would make sense to log received message and response
     #     in a format similar to report()
 
     # pass response message to gRPC to be sent to client
-    exp = 'grpcMessage.{0}(**r)'.format(reply)
-    return eval(exp)
+    sendMessage = getattr(grpcMessage,send)
+    return sendMessage(**r)
   
   def report(self):
     # capture final state of messageFields
@@ -93,18 +94,37 @@ class GenericServer(eval(exp)):
       self.time_elapsed += 1
     self.s.stop(0)
 
-
-# grpcServe is expecting a set of methods, one for each rcp stmt in the .proto file
-#   which intercept incoming messages and send reply
-# since names are context dependent, we create these methods dynamically
-#   and then add to GenericServer class using setattr()
+'''
+grpcServe is expecting a set of methods, one for each rcp stmt in the .proto file
+   which intercept incoming messages and send reply
+ since names are context dependent, we create these methods dynamically
+   and then add to GenericServer class using setattr()
+ Note: I would love to replace the exec() ugliness with setattr() but have failed
+   in my attempts
+'''
 for rpc in RPC_AND_MESSAGE_NAMES.keys():
-  exec('''
+  exec(
+'''
 def h(self,request,context):
   return self.intercept("{0}",request)
-  '''.format(rpc))
+'''.format(rpc)
+       )
   setattr(GenericServer,rpc,h)
-  
+
+'''
+  def h(self,request,context):
+    self.rpc_name = None
+    print('rcp_name in h():')
+    if self.rcp_name == None:
+      print('None')
+    else:
+      print(rcp_name)
+    print(self.rcp_name)
+    return self.intercept(self.rpc_name,request)
+  setattr(h,'rpc_name',name)
+  setattr(GenericServer,name,h)
+  del(h)
+'''
 
 class MetadataServer(GenericServer):
 

@@ -28,3 +28,9 @@ complex_signal_demo/complex_signal_pb2_grpc.py
 .DS_Store
 metadata_demo/__pycache__/metadata_demo.cpython-36.pyc
 metadata_demo/__pycache__/PROTO_DEFINITIONS.cpython-36.pyc
+metadata_demo/SUB/__pycache__/__init__.cpython-36.pyc
+metadata_demo/SUB/__pycache__/hello.cpython-36.pyc
+metadata_demo/SUB/__pycache__/metadata_demo_pb2.cpython-36.pyc
+metadata_demo/SUB/__pycache__/metadata_demo_pb2_grpc.cpython-36.pyc
+metadata_demo/SUB/metadata_demo_pb2.py
+metadata_demo/SUB/metadata_demo_pb2_grpc.py

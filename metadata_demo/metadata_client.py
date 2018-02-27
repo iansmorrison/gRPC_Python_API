@@ -4,25 +4,22 @@ Programmer David G Messerschmitt
 19 Feb 2018
 """
 
+import importlib
+
 # ENCAPSULATION OF RELEVANT .proto NAME DEFINTIONS
-# This file contains definitions of SERVICE_NAME,
-# RPC_AND_MESSAGE_NAMES and MESSAGE_FIELDS
+# This file contains definitions of SERVICE_NAME, RPC_AND_MESSAGE_NAMES and MESSAGE_FIELDS
 # This file is shared between client and server
 from PROTO_DEFINITIONS import *
 
 # gRPC engine
 import grpc
 
-# files compiled from the .proto file by gRPC
-cmd = 'import {0}_pb2 as grpcMessage'.format(NAME_OF_PROTO_FILE)
-# Example:
-# cmd = 'import metadata_demo_pb2 as grpcMessage'
+# Import gRPC-compiled modules, removing the .proto-specific naming
+grpcMessage = importlib.import_module('{0}_pb2'.format(NAME_OF_PROTO_FILE),'SUB')
+grpcServe = importlib.import_module('{0}_pb2_grpc'.format(NAME_OF_PROTO_FILE),'SUB')
 
-exec(cmd)
-cmd = 'import {0}_pb2_grpc as grpcServe'.format(NAME_OF_PROTO_FILE)
-# Example:
-# cnd = 'import metadata_demo_pb2_grpc as grpcServe'
-exec(cmd)
+# Do the same for needed functions within the modules
+grpcServeStub = getattr(grpcServe,'{0}Stub'.format(SERVICE_NAME))
 
 class GenericClientStub():
     '''
@@ -30,7 +27,8 @@ class GenericClientStub():
     Establish channel and satisfy rpc requests
     Class not specific to any protocol buffer definition, but encapsulates
         all the grpc mechanics and hides them from the user
-    This class does not require modification if the .proto file is changed
+    This class does not require modification if the .proto file is changed,
+        as it automatically makes use of the PROTO_DEFINITIONS dictonaries to customize
 
     !!! IT SHOULD NOT BE NECESARY TO EDIT THIS FILE !!!
     
@@ -44,11 +42,8 @@ class GenericClientStub():
         # establish a port where rpc requests can be received
         self.channel = grpc.insecure_channel(NET_CONNECTION)
 
-        # instantiate a server instance listening to this channel
-        exp = 'grpcServe.{0}Stub(self.channel)'.format(SERVICE_NAME)
-        # Example:
-        # exp = 'grpcServe.ServiceControlStub(self.channel)'
-        self.stub = eval(exp)
+        # instantiate a client stub listening to this channel
+        self.stub = grpcServeStub(self.channel)
         
     def rpcSend(self,rpc_name):
         # request to invoke rpc requires name of rcp channel
@@ -60,19 +55,13 @@ class GenericClientStub():
         # c_name = 'QueryRequest' and s_name = 'QueryReply'
 
         # formulate gRPC command in two stages
-        exp = 'grpcMessage.{0}(**self.messageFields["{0}"])'.format(c_name)
-        # Example:
-        # cmd = 'grpcMessage.QueryRequest(**self.messageFields["QueryRequest"])'
-
+        sendMessage = getattr(grpcMessage,c_name)(**self.messageFields[c_name])
         # execute message transmission; note that this is a blocking transaction
-        exp = 'self.stub.{0}({1})'.format(rpc_name,exp)
-        # Example:
-        # cmd = 'self.stub.Query(cmd)'
-        r = eval(exp)
-        
-        # populate the dictionary message fields based on response r
+        r = getattr(self.stub,rpc_name)(sendMessage)
+       
+        # populate the dictionary message fields based on response r from server
         for key in self.messageFields[s_name].keys():
-            self.messageFields[s_name][key] = eval('r.{0}'.format(key))
+            self.messageFields[s_name][key] = getattr(r,key)
 
         # we are finished; the client can now retreive the received message
         #   from messageFields[][]
@@ -117,23 +106,29 @@ class MetadataClient(GenericClientStub):
         self.report() = gives a printed report of the entire message dictionary, good for debuggng.
     Note that this class may implement the communication portion of an application, deferring the
         remainder of the application logic to an inherited class.
+
+            !!! THIS IMPLEMENTATION IS SPECIFIC TO THE .proto DEFINITIONS !!!
+
     '''
 
     def __init__(self):
 
-        # create a copy of MESSAGE_FIELDS so its content can be dynamically changed
-        # any desired default values can be introduced here in place of None
+        # This would be the place to define any desired default values
+        #   for messageField[][]
         # any message fields not defaulted or set here will default to gRPC-defined values
-        self.messageFields = MESSAGE_FIELDS.copy()
 
+        # this will instantiate a client stub and connection to server
         super().__init__()
 
     def run(self):
         '''
-        This method is invoked in order to run the client
+        This method is invoked in order to run the client, which interacts with the rpc client stub
         Its purpose is to generate rpc messages, interpret the responses from
             the server, and generate new rpc messages
+            
+        This is an implementation of a metadata demo
         '''
+
         # the natural ordering of rpc requests is Query, Service, WrapUP
         
         # first send a Query

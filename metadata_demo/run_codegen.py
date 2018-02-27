@@ -11,7 +11,7 @@ from grpc_tools import protoc
 # these are shared between client and server
 from PROTO_DEFINITIONS import *
 
-subDirectory = './SUB'
+subDirectory = '.'
 
 outcome = protoc.main(
     (

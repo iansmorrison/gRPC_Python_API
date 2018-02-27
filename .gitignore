@@ -34,3 +34,5 @@ metadata_demo/SUB/__pycache__/metadata_demo_pb2.cpython-36.pyc
 metadata_demo/SUB/__pycache__/metadata_demo_pb2_grpc.cpython-36.pyc
 metadata_demo/SUB/metadata_demo_pb2.py
 metadata_demo/SUB/metadata_demo_pb2_grpc.py
+metadata_demo/__pycache__/generic_client.cpython-36.pyc
+metadata_demo/__pycache__/generic_server.cpython-36.pyc

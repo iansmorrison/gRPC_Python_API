@@ -1,11 +1,5 @@
-"""
-The Python implementation of a generic gRPC client stub
-Programmer David G Messerschmitt
-19 Feb 2018
-"""
-
 '''
-The client implementation of a metadata demo
+The client implementation of a metadata demo client logic
 Programmer David G Messerschmitt
 22 Feb 2018
 '''
@@ -41,12 +35,13 @@ class MetadataClient(generic_client.GenericClientStub):
         #   for messageField[][]
         # any message fields not defaulted or set here will default to gRPC-defined values
 
-        # this will instantiate a client stub and connection to server
+        # instantiate a client stub and connection to server
         super().__init__()
 
     def run(self):
         '''
-        This method is invoked in order to run the client, which interacts with the rpc client stub
+        This method is invoked in order to run the client,
+            which interacts with the rpc client stub
         Its purpose is to generate rpc messages, interpret the responses from
             the server, and generate new rpc messages
             

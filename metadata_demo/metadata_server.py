@@ -1,12 +1,12 @@
 """
-The Python implementation of a generic GRPC service stub
+The Python implementation of a metadata demonstration service stub
 Progammer David G Messerschmitt
 19 Feb 2018
 """
 
-import generic_server
+import generic_server as gs
 
-class MetadataServer(generic_server.GenericServer):
+class MetadataServer(gs.GenericServer):
 
   def __init__(self):
     super().__init__()
@@ -25,4 +25,7 @@ if __name__ == '__main__':
 
   s = MetadataServer()
   s.run()
-  s.report() # view final state of messageFields
+  # view final state of messageFields
+  # note that what we would prefer is a log file that captures all the
+  #   intermediate actions; that will be added later
+  s.report()

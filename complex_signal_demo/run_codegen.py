@@ -4,16 +4,21 @@ Runs protoc with the gRPC plugin to generate messages and gRPC stubs
 """
 
 from grpc_tools import protoc
-
-file_name = 'complex_signal'
     
+# this file contains definitions of SERVICE_NAME,
+# RPC_AND_MESSAGE_NAMES and MESSAGE_FIELDS
+# these are shared between client and server
+from PROTO_DEFINITIONS import *
+
+subDirectory = '.'
+
 outcome = protoc.main(
     (
 	'',
 	'--proto_path=.',
-	'--python_out=.',
-	'--grpc_python_out=.',
-	'./' + file_name + '.proto',
+	'--python_out=' + subDirectory,
+	'--grpc_python_out=' + subDirectory,
+	'./' + NAME_OF_PROTO_FILE + '.proto',
     )
 )
 

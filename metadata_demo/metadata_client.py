@@ -1,8 +1,3 @@
-"""
-The Python implementation of a generic gRPC client stub
-Programmer David G Messerschmitt
-19 Feb 2018
-"""
 
 '''
 The client implementation of a metadata demo

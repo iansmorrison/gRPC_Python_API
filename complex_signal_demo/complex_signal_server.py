@@ -1,81 +1,40 @@
 """
-The Python implementation of the ComplexSignal server
+The Python implementation of a complex signal server
 This version uses a both a repeated field (for efficiency)
   and streaming (for long responses) to return multiple complex samples
-  
-Programmer: David G Messerschmitt
-5 Feb 2018
+Progammer David G Messerschmitt
+2 March 2018
 """
 
-from concurrent import futures
-import time
-import math
-import grpc
-import complex_signal_pb2
-import complex_signal_pb2_grpc
+import generic_server as gs
 
-# Configuration
-_NUM_MESSAGES_PER_RESPONSE = 10 # Set this for efficiency
-_ONE_DAY_IN_SECONDS = 60 * 60 * 24
-_timeout = _ONE_DAY_IN_SECONDS # Elapsed time before giving up
-_net_addr = 'localhost:50056' # Port to listen to for RPC requests
+class ComplexSignalServer(gs.GenericServer):
 
-def samples_real(num,start_seq_num):
-  # num = total number of samples to send back as repetition
-  # start_seq_num = starting number in the sequence
-  for n in range(num):
-    yield float(start_seq_num + n +0.2)
+  def __init__(self):
 
-def samples_imag(num,start_seq_num):
-  for n in range(num):
-    yield float(start_seq_num + n +0.7)
-  
-class ComplexSignal(complex_signal_pb2_grpc.ComplexSignalServicer):
+    # initialize messageFields[][]
+    super().__init__()
 
-  def Signal(self,request,context):
-    # Total greetings
-    _num = request.num_samples
-    # Greetings per response
-    _num_responses = math.floor(_num/_NUM_MESSAGES_PER_RESPONSE)
-    # Greetings in the last response
-    _num_left_over = _num % _NUM_MESSAGES_PER_RESPONSE
-    # stream lists of greetings
-    for n in range(_num_responses):
-      # response single list of greetings
-      yield complex_signal_pb2.Signal(
-        real = samples_real(
-          _NUM_GREETINGS_PER_RESPONSE,
-          n * _NUM_GREETINGS_PER_RESPONSE
-          ),
-        imag = samples_imag(
-          _NUM_GREETINGS_PER_RESPONSE,
-          n * _NUM_GREETINGS_PER_RESPONSE)
-          )
-    # Last response with a list of greetings left over
-    yield complex_signal_pb2.Signal(
-        real = samples_real(
-          _num_left_over,
-          _num_responses * _NUM_GREETINGS_PER_RESPONSE
-          ),
-        imag = samples_imag(
-          _NUM_GREETINGS_PER_RESPONSE,
-          n * _NUM_GREETINGS_PER_RESPONSE
-          )
-          )
+    # defaults
+    self.messageFields['Signal']['phaseIncrement'] = 0.25
+    self.messageFields['Signal']['numSamples'] = 10
+    
 
-def serve():
-  server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-  complex_signal_pb2_grpc.add_ComplexSignalServicer_to_server(
-    ComplexSignal(),
-    server
-    )
-  server.add_insecure_port(_net_addr)
-  server.start()
-  try:
-    while True:
-      time.sleep(_ONE_DAY_IN_SECONDS)
-  except KeyboardInterrupt:
-    server.stop(0)
+  def response(self,message):
 
+    if message == 'Request':
+
+        # extract requested signal parameters
+        phaseIncrement = self.messageFields['Request']['phaseIncrement']
+        numSamples = self.messageFields['Request']['numSamples']
+
+        # generate requested signal with those parameters
+        self.messageFields['Signal']['phaseIncrement'] = phaseIncrement
+        self.messageFields['Signal']['numSamples'] = numSamples
+        self.messageFields['Signal']['real'] = 1.0
+    
 if __name__ == '__main__':
-  serve()
+
+  s = ComplexSignalServer()
+  s.run()
+  s.report() # view final state of messageFields

@@ -10,31 +10,34 @@ Programmer: David G Messerschmitt
 syntax = "proto3";
 
 // Python does not make use of .proto packages but this might be useful for
-//   other languages
+// 	other languages
 package complex_signal;
 
-// This version returns multiple greetings
-// Does this using both a repeated greeting combined with streaming
-// The repeated greetings can be used for efficiency by merging them
-//    in a common message on the wire
-// The streaming allows longer streams of messages
+// This version returns samples of a complex signal
+// Does this using both repeated samples combined with streaming
+// The repeated samples can be used for efficiency by merging them
+// 	in a common packet on the wire
+// The streaming allows longer signals that would not efficiently
+//	fit in a single packet
 
-// The greeting service definition
 service ComplexSignal {
-
-  rpc AccessSignal (SignalRequest) returns (stream Signal);
+  rpc GetSignal (Request) returns (Signal);
 }
 
-message Complex {
-	float real = 1;
-	float imag = 2;
-}
 
-message SignalRequest {
-  int32 num_samples = 1;
+message Request {
+
+	// Phase increment as a fraction of 2*pi
+	// According to sampling theorem, must have phaseIncrement < 0.5
+	float phaseIncrement = 1;
+	int32 numSamples = 2;
 }
 
 message Signal {
-  repeated Complex samples = 1;
+	
+	// Confirm the parameters actually used
+	float phaseIncrement = 1;
+	int32 numSamples = 2;
+	float real = 3;
 }
 

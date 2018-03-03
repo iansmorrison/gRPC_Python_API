@@ -11,15 +11,22 @@ class MetadataServer(generic_server.GenericServer):
   def __init__(self):
     super().__init__()
 
-  def response(self,message):
+  def respond(self,rpc,recd,send):
+    # arguments are rpc channel, and names of receive and send
+    #   messages on that rpc
 
-    if message == 'QueryRequest':
+    if rpc == 'Query':
       self.messageFields['QueryReply']['answer'] = 'A or B or C'
-    elif message == 'ServiceRequest':
+      self.reply()
+      
+    elif rpc == 'Service':
       self.messageFields['ServiceStatus']['report'] = 'B accomplished'
-    elif message == 'ClientStatus':
+      self.reply()
+      
+    elif rpc == 'WrapUp':
       self.messageFields['WrapUpReport']['report'] = 'Waiting for another request'
-  
+      self.reply()
+
 
 if __name__ == '__main__':
 

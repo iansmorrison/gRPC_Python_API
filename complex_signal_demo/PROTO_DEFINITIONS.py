@@ -20,8 +20,7 @@ MESSAGE_FIELDS =    {
                             'numSamples': None
                            },
                       'Signal':
-                          {'phaseIncrement' : None,
-                           'numSamples' : None,
+                          {
                            'real' : None
                            }
                       }

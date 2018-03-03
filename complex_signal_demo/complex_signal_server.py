@@ -5,7 +5,7 @@ This version uses a both a repeated field (for efficiency)
 Progammer David G Messerschmitt
 2 March 2018
 """
-
+import math
 import generic_server as gs
 
 class ComplexSignalServer(gs.GenericServer):
@@ -15,11 +15,8 @@ class ComplexSignalServer(gs.GenericServer):
     # initialize messageFields[][]
     super().__init__()
 
-    # defaults
-    self.messageFields['Signal']['phaseIncrement'] = 0.25
-    self.messageFields['Signal']['numSamples'] = 10
+    # defaults here
     
-
   def response(self,message):
 
     if message == 'Request':
@@ -28,10 +25,12 @@ class ComplexSignalServer(gs.GenericServer):
         phaseIncrement = self.messageFields['Request']['phaseIncrement']
         numSamples = self.messageFields['Request']['numSamples']
 
-        # generate requested signal with those parameters
-        self.messageFields['Signal']['phaseIncrement'] = phaseIncrement
-        self.messageFields['Signal']['numSamples'] = numSamples
-        self.messageFields['Signal']['real'] = 1.0
+        # generate requested signal with those parameters       
+        vals = [None] * numSamples
+        for i in range(numSamples):
+          vals[i] = math.cos(2*math.pi*phaseIncrement*i)
+          
+        self.messageFields['Signal']['real'] = vals
     
 if __name__ == '__main__':
 

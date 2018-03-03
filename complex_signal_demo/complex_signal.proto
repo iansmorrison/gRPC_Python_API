@@ -21,7 +21,7 @@ package complex_signal;
 //	fit in a single packet
 
 service ComplexSignal {
-  rpc GetSignal (Request) returns (Signal);
+  rpc GetSignal (Request) returns (stream Signal);
 }
 
 
@@ -35,9 +35,6 @@ message Request {
 
 message Signal {
 	
-	// Confirm the parameters actually used
-	float phaseIncrement = 1;
-	int32 numSamples = 2;
-	float real = 3;
+	float real = 1;
 }
 

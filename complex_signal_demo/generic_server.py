@@ -56,7 +56,7 @@ class GenericServer(grpcServicer):
     # now call runtime method which formulates a response and store in messageFields[][]
     # normally server implementation will provide this method
     #   that responds to each possible received message recd
-    self.response(recd)
+    self.response(rpc)
 
     # pull that response from the dictonary, assuming it has been stored there by the client
     r = self.messageFields[send]
@@ -106,7 +106,7 @@ grpcServe is expecting a set of methods, one for each rcp stmt in the .proto fil
 for rpc in RPC_AND_MESSAGE_NAMES.keys():
   exec(
 '''
-def h(self,request,context):   # h is a placeholder name, immediately deleted
+def h(self,request,context):   # h is a placeholder, immediately deleted
   return self.intercept("{0}",request)
 '''.format(rpc)
        )

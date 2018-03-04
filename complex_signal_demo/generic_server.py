@@ -113,20 +113,4 @@ class GenericServer(grpcServicer):
       self.time_elapsed += 1
     self.s.stop(0)
 
-'''
-grpcServe is expecting a set of methods, one for each rcp stmt in the .proto file
-   which intercept incoming messages on that rcp and send reply
- since names are context dependent, we create these methods dynamically
-   and then add to GenericServer class using setattr()
- Note: I would love to replace the exec() ugliness, but I have tried and failed
-'''
-for rpc in RPC_AND_MESSAGE_NAMES.keys():
-  exec(
-'''
-def h(self,request,context):   # h is a placeholder, immediately deleted
-  return self.intercept("{0}",request)
-'''.format(rpc)
-       )
-  setattr(GenericServer,rpc,h)
-  del(h)
 

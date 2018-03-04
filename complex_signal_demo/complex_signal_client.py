@@ -5,15 +5,17 @@ This version uses a both a repeated field (for efficiency)
 Programmer: David G Messerschmitt
 2 March 2018
 """
+import importlib
 
+# ENCAPSULATION OF RELEVANT .proto NAME DEFINTIONS
+# This file contains definitions of SERVICE_NAME, RPC_AND_MESSAGE_NAMES and MESSAGE_FIELDS
+# This file is shared between client and server
+from PROTO_DEFINITIONS import *
 
 import generic_client as gs
 
-print('RPC and message names:')
-print(gs.RPC_AND_MESSAGE_NAMES)
-print('Message names and fields:')
-print(gs.MESSAGE_FIELDS)
-print(gs.RPC_AND_MESSAGE_NAMES['GetSignal'])
+grpcMessage = importlib.import_module('{0}_pb2'.format(NAME_OF_PROTO_FILE))
+sendMessage = getattr(grpcMessage,'Request')
 
 class ComplexSignalClient(gs.GenericClientStub):
     '''
@@ -44,11 +46,7 @@ class ComplexSignalClient(gs.GenericClientStub):
         # also initialize messageFields
         super().__init__()
         
-        # Defaults
-        self.messageFields['Request']['phaseBegin'] = 0.
-        self.messageFields['Request']['phaseIncrement'] = 0.25
-        self.messageFields['Request']['numSamples'] = 10
-        
+        self.request = {'phaseBegin':0,'phaseIncrement':0.1,'numSamples':20}
 
     def run(self):
         '''
@@ -59,13 +57,14 @@ class ComplexSignalClient(gs.GenericClientStub):
         '''
         
         # send a Request
-        # rely on defaults for now
-        self.rpcSend('GetSignal')
-        sample = self.messageFields['Signal']['real']
-        print(sample)
+        s = sendMessage(**self.request)
+        # access the Signal
+        r = self.stub.GetSignal(s)
 
+        for sample in r:
+            print(sample.real)
 
 if __name__ == '__main__':
  c = ComplexSignalClient()
  c.run()
- c.report() # view final state of messageFields
+ #c.report() # view final state of messageFields

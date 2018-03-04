@@ -16,6 +16,7 @@ RPC_AND_MESSAGE_NAMES = {
 MESSAGE_FIELDS =    {
                       'Request':
                           {
+                            'phaseBegin' : None,
                             'phaseIncrement' : None,
                             'numSamples': None
                            },
@@ -26,7 +27,7 @@ MESSAGE_FIELDS =    {
                       }
 
 '''
-Also define configuration parameters
+Also define server configuration parameters
 '''
 
 MAXIMUM_SERVICE_TIME_IN_MINUTES = 15

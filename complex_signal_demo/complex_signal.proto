@@ -29,8 +29,9 @@ message Request {
 
 	// Phase increment as a fraction of 2*pi
 	// According to sampling theorem, must have phaseIncrement < 0.5
-	float phaseIncrement = 1;
-	int32 numSamples = 2;
+	float phaseBegin = 1;
+	float phaseIncrement = 2;
+	int32 numSamples = 3;
 }
 
 message Signal {

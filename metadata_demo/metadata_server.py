@@ -14,18 +14,22 @@ class MetadataServer(generic_server.GenericServer):
   def respond(self,rpc,recd,send):
     # arguments are rpc channel, and names of receive and send
     #   messages on that rpc
+    # return value is False if there are no more responses, and
+    #   True if there are more responses (please call respond() again)
 
     if rpc == 'Query':
       self.messageFields['QueryReply']['answer'] = 'A or B or C'
-      self.reply()
+      
+      # Only one response necessary (not streaming rpc)
+      return False
       
     elif rpc == 'Service':
       self.messageFields['ServiceStatus']['report'] = 'B accomplished'
-      self.reply()
+      return False
       
     elif rpc == 'WrapUp':
       self.messageFields['WrapUpReport']['report'] = 'Waiting for another request'
-      self.reply()
+      return False
 
 
 if __name__ == '__main__':

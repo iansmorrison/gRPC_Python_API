@@ -45,6 +45,7 @@ class ComplexSignalClient(gs.GenericClientStub):
         super().__init__()
         
         # Defaults
+        self.messageFields['Request']['phaseBegin'] = 0.
         self.messageFields['Request']['phaseIncrement'] = 0.25
         self.messageFields['Request']['numSamples'] = 10
         

@@ -51,7 +51,7 @@ class GenericServer(grpcServicer):
     
     # access list of messages names for this rpc
     # store send message for benefit of reply()
-    [recd,self.active_send] = RPC_AND_MESSAGE_NAMES[rpc]
+    [recd,send] = RPC_AND_MESSAGE_NAMES[rpc]
     
     # for each field in receive message, store received value in message dictionary
     for field in self.messageFields[recd].keys():
@@ -60,26 +60,28 @@ class GenericServer(grpcServicer):
     # now call runtime method which formulates a response and store in messageFields[][]
     # server should provide this method
     #   that responds to each possible received message recd
-    self.respond(rpc,recd,self.active_send)
 
-
-  def reply(self):
-    # server is responsible for initiating this reply when it is ready
-    # reply will be on same rpc channel as last respond() call to the server
-    #   to avoid inadvertent error
-
-    print('Reply message: ' + self.active_send)
-
-    # pull that response from the dictonary, assuming it has been stored there by the client
-    r = self.messageFields[self.active_send]
-    print(r)
+    # if this is streaming rpc, require multiple response messages
+    # server signals more responses coming by returning True
+    #   and last response by returning False
+    more_responses = True
     
-    # at this point it would make sense to log received message and response
-    #     in a format similar to report()
+    while more_responses:
+    
+      more_responses = self.respond(rpc,recd,send)
+      
+      print('Reply message: ' + send)
 
-    # pass response message to gRPC to be sent to client
-    sendMessage = getattr(grpcMessage,self.active_send) # gRPC method to handle this request
-    return sendMessage(**r) # unpack message fields from dictionary and hand over to gRPC
+      # pull that response from the dictonary, assuming it has been stored there by the client
+      r = self.messageFields[send]
+      print(r)
+    
+      # at this point it would make sense to log received message and response
+      #     in a format similar to report()
+
+      # pass response message to gRPC to be sent to client
+      sendMessage = getattr(grpcMessage,send) # gRPC method to handle this request
+      return sendMessage(**r) # unpack message fields from dictionary and hand over to gRPC
 
     
   def report(self):

@@ -5,32 +5,46 @@ This version uses a both a repeated field (for efficiency)
 Progammer David G Messerschmitt
 2 March 2018
 """
-import math
+from math import *
 import generic_server as gs
 
 class ComplexSignalServer(gs.GenericServer):
 
+  number = 0  # keeps track of number of samples sent
+  
   def __init__(self):
 
     # initialize messageFields[][]
     super().__init__()
 
-    # defaults here
+    self.num = 0 # number of signal samples already streamed
+    self.pb = 0.
+    self.pi = .25
+    self.ns = 10
+
+    # (optional) defaults here
     
-  def response(self,message):
+  def respond(self,rpc,recd,sent):
 
-    if message == 'Request':
+    if self.num == 0 and rpc == 'Request':
 
-        # extract requested signal parameters
-        phaseIncrement = self.messageFields['Request']['phaseIncrement']
-        numSamples = self.messageFields['Request']['numSamples']
+        print('Call to server with these parameters:')
+        
+        # extract requested signal parameters only once
+        self.pb = self.messageFields['Request']['phaseBegin']
+        self.pi = self.messageFields['Request']['phaseIncrement']
+        self.ns = self.messageFields['Request']['numSamples']
+        
 
-        # generate requested signal with those parameters       
-        vals = [None] * numSamples
-        for i in range(numSamples):
-          vals[i] = math.cos(2*math.pi*phaseIncrement*i)
-          
-        self.messageFields['Signal']['real'] = vals
+    # generate one more sample with those parameters
+    print(self.pb,self.pi,self.num,self.ns)
+    phase = self.pb + self.pi * self.num
+    self.messageFields['Signal']['real'] = cos(phase)
+                                
+    self.num = self.num + 1
+    
+    if self.num < self.ns:  return True   # more samples to be streamed                   
+    else: return False  # we are done
     
 if __name__ == '__main__':
 

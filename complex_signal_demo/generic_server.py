@@ -24,6 +24,9 @@ grpcMessage = importlib.import_module('{0}_pb2'.format(NAME_OF_PROTO_FILE))
 grpcServicer = getattr(grpcServe,'{0}Servicer'.format(SERVICE_NAME))
 grpcAddServicer = getattr(grpcServe,'add_{0}Servicer_to_server'.format(SERVICE_NAME))
 
+# Configuration
+MAXIMUM_SERVICE_TIME_IN_MINUTES = 15
+
 # dynamically create class GenericServer that inherits from grpcServe
 #   and adds methods specific to this rpc context
 class GenericServer(grpcServicer):
@@ -33,8 +36,6 @@ class GenericServer(grpcServicer):
     self.going = True   # set False to force server termination at the next opportunity
     self.timeout = MAXIMUM_SERVICE_TIME_IN_MINUTES
     
-    # copy of message fields which can be used to store messages and responses
-    self.messageFields = MESSAGE_FIELDS.copy()
     
     super().__init__()
 

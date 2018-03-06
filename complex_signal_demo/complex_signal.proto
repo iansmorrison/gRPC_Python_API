@@ -21,7 +21,7 @@ package complex_signal;
 //	fit in a single packet
 
 service ComplexSignal {
-  rpc GetSignal (Request) returns (stream Signal);
+  rpc GetSignal (Request) returns (stream Sample);
 }
 
 
@@ -34,8 +34,10 @@ message Request {
 	int32 numSamples = 3;
 }
 
-message Signal {
+message Sample {
 	
-	float real = 1;
+	// Complex sample has real and imaginary parts
+	repeated float real = 1;
+	repeated float imag = 2;
 }
 

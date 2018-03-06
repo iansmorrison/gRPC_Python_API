@@ -39,3 +39,4 @@ metadata_demo/__pycache__/generic_server.cpython-36.pyc
 complex_signal_demo/__pycache__/generic_client.cpython-36.pyc
 complex_signal_demo/__pycache__/generic_server.cpython-36.pyc
 complex_signal_demo/__pycache__/PROTO_DEFINITIONS.cpython-36.pyc
+complex_signal_demo/__pycache__/complex_signal_client.cpython-36.pyc

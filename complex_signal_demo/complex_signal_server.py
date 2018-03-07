@@ -1,81 +1,65 @@
 """
-The Python implementation of the ComplexSignal server
-This version uses a both a repeated field (for efficiency)
+The Python implementation of a server that returns a complex-valued signal
+It uses a both a repeated field (for efficiency)
   and streaming (for long responses) to return multiple complex samples
-  
-Programmer: David G Messerschmitt
-5 Feb 2018
+Progammer David G Messerschmitt
+5 March 2018
 """
+from math import *
+import importlib
+import generic_server as gs
 
-from concurrent import futures
-import time
-import math
-import grpc
-import complex_signal_pb2
-import complex_signal_pb2_grpc
+from PROTO_DEFINITIONS import *
 
-# Configuration
-_NUM_MESSAGES_PER_RESPONSE = 10 # Set this for efficiency
-_ONE_DAY_IN_SECONDS = 60 * 60 * 24
-_timeout = _ONE_DAY_IN_SECONDS # Elapsed time before giving up
-_net_addr = 'localhost:50056' # Port to listen to for RPC requests
+# ComplexSignalServer assumes:
+#   the rpc channel is 'GetSignal'
+#   received messsages have a field 'numSamples'
+#   the return messages are 'stream Sample' with fields 'real' and 'imag'
 
-def samples_real(num,start_seq_num):
-  # num = total number of samples to send back as repetition
-  # start_seq_num = starting number in the sequence
-  for n in range(num):
-    yield float(start_seq_num + n +0.2)
+grpcMessage = importlib.import_module('{0}_pb2'.format(NAME_OF_PROTO_FILE))
+sendMessage = getattr(grpcMessage,'Sample')
 
-def samples_imag(num,start_seq_num):
-  for n in range(num):
-    yield float(start_seq_num + n +0.7)
+# Adjust this parameter for efficiency
+NUM_MESSAGES_PER_RESPONSE = 10
+
+class ComplexSignalServer(gs.GenericServer):
   
-class ComplexSignal(complex_signal_pb2_grpc.ComplexSignalServicer):
+  def __init__(self):
+    super().__init__()
 
-  def Signal(self,request,context):
-    # Total greetings
-    _num = request.num_samples
-    # Greetings per response
-    _num_responses = math.floor(_num/_NUM_MESSAGES_PER_RESPONSE)
-    # Greetings in the last response
-    _num_left_over = _num % _NUM_MESSAGES_PER_RESPONSE
-    # stream lists of greetings
-    for n in range(_num_responses):
-      # response single list of greetings
-      yield complex_signal_pb2.Signal(
-        real = samples_real(
-          _NUM_GREETINGS_PER_RESPONSE,
-          n * _NUM_GREETINGS_PER_RESPONSE
-          ),
-        imag = samples_imag(
-          _NUM_GREETINGS_PER_RESPONSE,
-          n * _NUM_GREETINGS_PER_RESPONSE)
-          )
-    # Last response with a list of greetings left over
-    yield complex_signal_pb2.Signal(
-        real = samples_real(
-          _num_left_over,
-          _num_responses * _NUM_GREETINGS_PER_RESPONSE
-          ),
-        imag = samples_imag(
-          _NUM_GREETINGS_PER_RESPONSE,
-          n * _NUM_GREETINGS_PER_RESPONSE
-          )
-          )
+  # needs to be a method for each rpc channel that processes
+  #   request and sends response as defined in .proto file
+  # name of method == name of rpc channel
+  
+  def GetSignal(self,request,context):
+    
+    # first deal with the parameters of request
+    # first strip off parameters needed by self
+    self.ns = getattr(request,'numSamples')
+    # remaining parameters not needed
 
-def serve():
-  server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-  complex_signal_pb2_grpc.add_ComplexSignalServicer_to_server(
-    ComplexSignal(),
-    server
-    )
-  server.add_insecure_port(_net_addr)
-  server.start()
-  try:
-    while True:
-      time.sleep(_ONE_DAY_IN_SECONDS)
-  except KeyboardInterrupt:
-    server.stop(0)
+    # second pass remaining parmaters to inherited class
+    #   which uses them to generate the signal
+    # note that we pass ALL the paramerters
+    self.parameters(request)
+    
+    # Size of each response is NUM_MESSAGES_PER_RESPONSE
+    # Number of responses in each repeated field
+    self.nr = floor(self.ns/NUM_MESSAGES_PER_RESPONSE)
+    # Size of last remaining repeated field
+    self.nlo = self.ns % NUM_MESSAGES_PER_RESPONSE
 
-if __name__ == '__main__':
-  serve()
+    for j in range(self.nr): # iterate over signal chunks
+
+      # send two repeated fields
+      [real,imag] = self.signal(NUM_MESSAGES_PER_RESPONSE)
+      r = {'real' : real,'imag' : imag}
+      yield sendMessage(**r)
+
+    # last remaining repeated field, which may 
+    if self.nlo == 0: # not needed
+      yield None
+    else:
+      [real,imag] = self.signal(self.nlo)
+      r = {'real' : real,'imag' : imag}
+      yield sendMessage(**r)

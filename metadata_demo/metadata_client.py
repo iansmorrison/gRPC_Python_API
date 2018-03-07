@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+=======
+
+>>>>>>> Development
 '''
 The client implementation of a metadata demo client logic
 Programmer David G Messerschmitt

@@ -1,0 +1,55 @@
+"""
+The Python implementation of a server that returns a
+  complex exponential complex-valued signal
+Progammer David G Messerschmitt
+6 March 2018
+"""
+from math import pi,sin,cos
+
+import complex_signal_server as css
+
+class ComplexExponentialServer(css.ComplexSignalServer):
+  
+  def __init__(self):
+    
+    super().__init__()
+    
+    self.samples_sent = 0  # number of signal samples already sent
+    self.last_size = -1  # size of last chunk sent
+
+  def parameters(self,request):
+
+    # required method of ComplexSignalServer
+    # passes paramters from the original rpc request
+
+    self.pb = getattr(request,'phaseBegin')
+    self.pi = getattr(request,'phaseIncrement')
+    # request attribute 'numSamples' not needed
+    
+  def signal(self,size):
+    
+    # required method of ComplexSignalServer
+    # returns a chunk of samples as a pair of lists, one real and one imag
+    #   size = number of samples requested; len() of both lists
+    # this method will be called repeatedly for streaming, and
+    #   so much maintain an internal state between calls
+
+    if size != self.last_size:  # Allocate new memory for samples
+      self.real = [None] * size; self.imag = [None] * size
+    
+    for i in range(size):
+ 
+      phase = self.pb + self.pi * (self.samples_sent + i)
+      self.real[i] = cos(2*pi*phase)
+      self.imag[i] = sin(2*pi*phase)
+        
+    self.samples_sent += size
+    self.last_size = size
+    
+    return [self.real,self.imag]
+         
+    
+if __name__ == '__main__':
+
+  s = ComplexExponentialServer()
+  s.run()

@@ -29,22 +29,34 @@ grpcAddServicer = getattr(grpcServe,'add_{0}Servicer_to_server'.format(SERVICE_N
 class GenericServer(grpcServicer):
 
   def __init__(self):
-    self.going = True
+    
+    self.going = True   # set False to force server termination at the next opportunity
     self.timeout = MAXIMUM_SERVICE_TIME_IN_MINUTES
+    
     # copy of message fields which can be used to store messages and responses
     self.messageFields = MESSAGE_FIELDS.copy()
-    self.rcp_name = ''
+    
     super().__init__()
 
   def intercept(self,rpc,request):
     # intercepts incoming message via rpc, stores message on dictionary and
     #   calls server to read message and formulate reply, then sends reply to client via rpc
 
+<<<<<<< HEAD
+=======
+    # at this point it would make sense to log received message and response
+    #     in a format similar to report()
+
+>>>>>>> Development
     # print request: a poor man's substitute for a proper log file
     print('Received message to server on RPC channel: ' + rpc)
     print(request)
     
     # access list of messages names for this rpc
+<<<<<<< HEAD
+=======
+    # store send message for benefit of reply()
+>>>>>>> Development
     [recd,send] = RPC_AND_MESSAGE_NAMES[rpc]
     
     # for each field in receive message, store received value in message dictionary
@@ -52,20 +64,38 @@ class GenericServer(grpcServicer):
       self.messageFields[recd][field] = getattr(request,field)
       
     # now call runtime method which formulates a response and store in messageFields[][]
+<<<<<<< HEAD
     # normally server implementation will provide this method
     #   that responds to each possible received message recd
     self.response(recd)
+=======
+    # server should provide this method
+    #   that responds to each possible received message recd
 
-    # pull that response from the dictonary, assuming it has been stored there by the client
-    r = self.messageFields[send]
+    # if this is streaming rpc, require multiple response messages
+    # server signals more responses coming by returning True
+    #   and last response by returning False
+    more_responses = True
     
-    # at this point it would make sense to log received message and response
-    #     in a format similar to report()
+    while more_responses:
+    
+      more_responses = self.respond(rpc,recd,send)
+      
+      print('Reply message: ' + send)
+>>>>>>> Development
 
-    # pass response message to gRPC to be sent to client
-    sendMessage = getattr(grpcMessage,send)
-    return sendMessage(**r)
-  
+      # pull that response from the dictonary, assuming it has been stored there by the client
+      r = self.messageFields[send]
+      print(r)
+    
+      # at this point it would make sense to log received message and response
+      #     in a format similar to report()
+
+      # pass response message to gRPC to be sent to client
+      sendMessage = getattr(grpcMessage,send) # gRPC method to handle this request
+      return sendMessage(**r) # unpack message fields from dictionary and hand over to gRPC
+
+    
   def report(self):
     # capture final state of messageFields
     print('\n!!!!! Report of the gRPC sent and response messages !!!!')
@@ -99,14 +129,22 @@ grpcServe is expecting a set of methods, one for each rcp stmt in the .proto fil
    which intercept incoming messages on that rcp and send reply
  since names are context dependent, we create these methods dynamically
    and then add to GenericServer class using setattr()
+<<<<<<< HEAD
  Note: I would love to replace the exec() ugliness with setattr() but this turns
    out to be hard and so far I have failed (there are a lot of issues with changing
    the attributes of a class, which is intended to be immutable)
+=======
+ Note: I would love to replace the exec() ugliness, but I have tried and failed
+>>>>>>> Development
 '''
 for rpc in RPC_AND_MESSAGE_NAMES.keys():
   exec(
 '''
+<<<<<<< HEAD
 def h(self,request,context):   # h is a placeholder name, soon deleted
+=======
+def h(self,request,context):   # h is a placeholder, immediately deleted
+>>>>>>> Development
   return self.intercept("{0}",request)
 '''.format(rpc)
        )

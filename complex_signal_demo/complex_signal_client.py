@@ -3,17 +3,20 @@ The Python implementation of the ComplexSignalClient
 This version uses a both a repeated field (for efficiency)
   and streaming (for long-duration signals) to return multiple complex samples
 Programmer: David G Messerschmitt
-2 March 2018
-
-    !!! IT SHOULD NOT BE NECESSARY TO EDIT THIS FILE !!!
+6 March 2018
 """
+
+#   !!! NOT NECESSARY TO EDIT THIS FILE UNLESS PROTO FILE NAMES ARE CHANGED !!!
+#   ComplexSignal Client assumes:
+#       rpc channel is 'GetSignal'
+#       request message is 'Request'
 
 import generic_client as gc
 
 class ComplexSignalClient(gc.GenericClientStub):
     '''
     Retreives a generic complex-valued signal
-    Particulars of WHAT signal is retreived are left to an inherited class
+    Particulars of WHAT signal is returned are left to an inherited class
     '''
 
     def __init__(self):
@@ -31,7 +34,7 @@ class ComplexSignalClient(gc.GenericClientStub):
         
         # inherited class must implement request(), which returns the name
         #   of the request message aligned with the .proto file definition
-        self.sendMessage = getattr(self.grpcMessage,self.request())
+        self.sendMessage = getattr(self.grpcMessage,'Request')
         
         # inherited class must implement paramters(), which returns a dictionary
         #   with set of parameters aligned with .proto file definitions
@@ -39,7 +42,7 @@ class ComplexSignalClient(gc.GenericClientStub):
         
         # inherited class must implement rpc(), which returns the name
         #   of the rpc channel aligned with the .proto file definition
-        stub = getattr(self.stub,self.rpc())
+        stub = getattr(self.stub,'GetSignal')
 
         # access the complex signal in response by invoking the client stub
         r = stub(send)

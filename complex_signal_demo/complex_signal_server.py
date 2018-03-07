@@ -1,9 +1,9 @@
 """
-The Python implementation of a complex signal server
-This version uses a both a repeated field (for efficiency)
+The Python implementation of a server that returns a complex-valued signal
+It uses a both a repeated field (for efficiency)
   and streaming (for long responses) to return multiple complex samples
 Progammer David G Messerschmitt
-2 March 2018
+5 March 2018
 """
 from math import *
 import importlib
@@ -11,64 +11,55 @@ import generic_server as gs
 
 from PROTO_DEFINITIONS import *
 
-# Use repeated message fields to group messages in single packet
-# Number of messages is chosen for efficiency
-NUM_MESSAGES_PER_RESPONSE = 10
-# Too small results in more packets than necessary
-# Too large results in packet fragmentation and more packets
+# ComplexSignalServer assumes:
+#   the rpc channel is 'GetSignal'
+#   received messsages have a field 'numSamples'
+#   the return messages are 'stream Sample' with fields 'real' and 'imag'
 
 grpcMessage = importlib.import_module('{0}_pb2'.format(NAME_OF_PROTO_FILE))
-sendMessage = getattr(grpcMessage,'Sample') # gRPC method for sends
+sendMessage = getattr(grpcMessage,'Sample')
+
+# Adjust this parameter for efficiency
+NUM_MESSAGES_PER_RESPONSE = 10
 
 class ComplexSignalServer(gs.GenericServer):
-
-  number = 0  # keeps track of number of samples sent
   
   def __init__(self):
-
-    # initialize messageFields[][]
     super().__init__()
 
-    # (optional) defaults here
-
-  # needs to be a method like this for each rpc channel that processes
-  # request and sends response
+  # needs to be a method for each rpc channel that processes
+  #   request and sends response as defined in .proto file
   # name of method == name of rpc channel
+  
   def GetSignal(self,request,context):
+    
+    # first deal with the parameters of request
+    # first strip off parameters needed by self
+    self.ns = getattr(request,'numSamples')
+    # remaining parameters not needed
 
-    self.pb = request.phaseBegin
-    self.pi = request.phaseIncrement
-    self.ns = request.numSamples
+    # second pass remaining parmaters to inherited class
+    #   which uses them to generate the signal
+    # note that we pass ALL the paramerters
+    self.parameters(request)
+    
     # Size of each response is NUM_MESSAGES_PER_RESPONSE
-    # Number of responses
+    # Number of responses in each repeated field
     self.nr = floor(self.ns/NUM_MESSAGES_PER_RESPONSE)
-    # Size of last response
+    # Size of last remaining repeated field
     self.nlo = self.ns % NUM_MESSAGES_PER_RESPONSE
-    # Allocate memory for response
-    sample_array_real = [None] * NUM_MESSAGES_PER_RESPONSE
-    sample_array_imag = [None] * NUM_MESSAGES_PER_RESPONSE
-    sample_array_last_real = [None] * self.nlo
-    sample_array_last_imag = [None] * self.nlo
 
-    # generate nr 
-    for j in range(self.nr):
-      for i in range(NUM_MESSAGES_PER_RESPONSE):
-        phase = request.phaseBegin + request.phaseIncrement * (i+j*NUM_MESSAGES_PER_RESPONSE)
-        sample_array_real[i] = cos(2*pi*phase)
-        sample_array_imag[i] = sin(2*pi*phase)
-      r = {'real' : sample_array_real,'imag' : sample_array_imag}
+    for j in range(self.nr): # iterate over signal chunks
+
+      # send two repeated fields
+      [real,imag] = self.signal(NUM_MESSAGES_PER_RESPONSE)
+      r = {'real' : real,'imag' : imag}
       yield sendMessage(**r)
 
-    for i in range(self.nlo):
-      phase = request.phaseBegin + request.phaseIncrement * (i+self.nr*NUM_MESSAGES_PER_RESPONSE)
-      sample_array_last_real[i] = cos(2*pi*phase)
-      sample_array_last_imag[i] = sin(2*pi*phase)
-    r = {'real' : sample_array_last_real,'imag' : sample_array_last_imag}
-    yield sendMessage(**r)
-      
-    
-if __name__ == '__main__':
-
-  s = ComplexSignalServer()
-  s.run()
-  #s.report() # view final state of messageFields
+    # last remaining repeated field, which may 
+    if self.nlo == 0: # not needed
+      yield None
+    else:
+      [real,imag] = self.signal(self.nlo)
+      r = {'real' : real,'imag' : imag}
+      yield sendMessage(**r)

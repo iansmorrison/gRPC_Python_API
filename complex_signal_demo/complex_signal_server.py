@@ -13,41 +13,27 @@ import generic_server as gs
 from PROTO_DEFINITIONS import *
 
 # Configuration
-# Adjust this parameter for efficiency
-NUM_MESSAGES_PER_RESPONSE = 10
+NUM_MESSAGES_PER_RESPONSE = 10  # Adjust for efficiency
 
 class ComplexSignalServer(gs.GenericServer):
   
   def __init__(self):
-
     super().__init__()
-
-##    # a method must be provided for each message which returns response to client
-##    self.returnBack = getattr(self.grpcMessage,'Back')
-##    self.returnConfirm = getattr(self.grpcMessage,'Confirm')
-##    self.returnSample = getattr(self.grpcMessage,'Sample')
 
   # a method must be provided for each rpc channel that processes
   #   request and sends response as defined in .proto file
   # name of method == name of rpc channel
 
-  def Test(self,request,context):
-
-    print('Test message received: ',request.dave)
-    r = {'dody' : 'Test message received okay'}
-    return self.grpcMessage.Back(**r)
-
   def SetConfig(self,request,context):
 
-    # pass Param to inherited class, returns message to send back
-    r = self.config(request)
-    return self.grpcMessage.Confirm(**r)
+    # pass Param to inherited class, which returns message to send back
+    r = self.configuration(request)
+    return self.message.Confirm(**r)
   
   def GetSignal(self,request,context):
 
     self.ns = getattr(request,'numSamples')
     
-    # Size of each response is NUM_MESSAGES_PER_RESPONSE
     # Number of responses in each repeated field
     self.nr = floor(self.ns/NUM_MESSAGES_PER_RESPONSE)
     # Size of last remaining repeated field
@@ -58,14 +44,12 @@ class ComplexSignalServer(gs.GenericServer):
       # send two repeated fields
       [real,imag] = self.generate_signal(NUM_MESSAGES_PER_RESPONSE)
       r = {'real' : real,'imag' : imag}
-      #yield self.returnSample(**r)
-      yield self.grpcMessage.Sample(**r)
+      yield self.message.Sample(**r)
 
-    # last remaining repeated field, which may 
+    # last remaining repeated field
     if self.nlo == 0: # not needed
       yield None
     else:
       [real,imag] = self.generate_signal(self.nlo)
       r = {'real' : real,'imag' : imag}
-      #yield self.returnSample(**r)
-      yield self.grpcMessage.Sample(**r)
+      yield self.message.Sample(**r)

@@ -17,10 +17,17 @@ class ComplexExponentialServer(css.ComplexSignalServer):
     self.samples_sent = 0  # number of signal samples already sent
     self.last_size = -1  # size of last repeated field sent
 
-  def config(self,request):
+  #   !!! DISCOVERY  !!!
 
+  def discovery(self): pass
+
+  #   !!! CONFIGURATION  !!!
+
+  def configuration(self,request):
     # method required by ComplexSignalServer
-    # passes paramters from the original rpc request Param
+    # passes parameters from the original rpc request Param
+    #   and expects return of parameters from rpc reply Confirm
+    
     self.pB = request.phaseBegin
     self.pI = request.phaseIncrement
     if self.pI >= 0.5:
@@ -30,22 +37,20 @@ class ComplexExponentialServer(css.ComplexSignalServer):
         }
     else: return {
         'okay':True,
-        'narrative':'Complex exponential will be generated'
+        'narrative':'Complex exponential will be generated as requested'
         }
-          
+
+   #   !!! RUN  !!!
+         
   def generate_signal(self,size):
     
     # required method of ComplexSignalServer
-    # returns a chunk of samples as a pair of lists, one real and one imag
-    #   size = number of samples requested; len() of both lists
+    # returns a repeated field of samples as a pair of lists
+    # size = number of samples requested
     # this method will be called repeatedly for streaming, and
-    #   so much maintain an internal state between calls
-
-    # added for debug
-    self.pB = 0.
-    self.pI = 0.1
+    #   so must maintain an internal state between calls
     
-    if size != self.last_size:  # Allocate new memory for samples
+    if size is not self.last_size:  # Allocate new memory for samples
       self.real = [None] * size; self.imag = [None] * size
     
     for i in range(size):

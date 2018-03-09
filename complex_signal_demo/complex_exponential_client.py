@@ -16,16 +16,19 @@ class ComplexExponentialClient(csc.ComplexSignalClient):
     def __init__(self):
         super().__init__()
 
-    # This method provides parameters for the configuration of the server
-    # phaseBegin and phaseIncrement are fractions of 2*pi radians
-    # Note that phaseIncrement = analog frequency * analog sampling interval
-    def parameters(self):
-        return {'phaseBegin' : 0.,'phaseIncrement' : 0.1}
+    # There are three phases: discovery, configuration, and run
 
-    # The following methods invokes super class to instantiate the run the client
-    #   assumed to implemment get()
+    def discovery(self):
+        # implements a discovery prototol
+        pass
+
+    def configuration(self):
+        # sets server configuration parameters
+        self.set_parameters({'phaseBegin' : 0.,'phaseIncrement' : 0.1})
+
     def run(self):
         # run the client to return complex exponential with parameters()
+        # super class provides get(), which receives a streamed complex signal
         [self.reals,self.imags] = self.get()
 
     def report(self, resolution=3):
@@ -38,5 +41,7 @@ class ComplexExponentialClient(csc.ComplexSignalClient):
 
 if __name__ == '__main__':
  c = ComplexExponentialClient()
+ c.discovery()
+ c.configuration()
  c.run()
  c.report()

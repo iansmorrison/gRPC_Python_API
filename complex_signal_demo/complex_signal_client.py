@@ -18,40 +18,35 @@ class ComplexSignalClient(gc.GenericClientStub):
     '''
 
     def __init__(self):
-
         super().__init__()
+
+        self.samples = 105 # number of samples to generate and stream
+
+    #   !!! DISCOVERY  !!!
+
+        # not implemented
+
+    #   !!! CONFIGURATION !!!
+
+    def set_parameters(self,p):
+        # inherited class can call this method to set parameters of the server
+
+        s = self.message.Param(**p)
+        r = self.channel.SetConfig(s) # returns response message
         
-        # methods for send messages
-        # there must be one for each rpc channel
-        #self.sendTest = getattr(self.grpcMessage,'Go')
-        self.sendConfig = getattr(self.grpcMessage,'Param')
-        self.sendRequest = getattr(self.grpcMessage,'Request')
+        if not r.okay:  # server not satisfied with parameters
+            print('Warning! ',r.narrative)
 
-        # methods for response messages
-        # there must be one for each rpc channel
-        #self.stubTest = getattr(self.stub,'Test')
-        self.stubConfig = getattr(self.stub,'SetConfig')
-        self.stubSignal = getattr(self.stub,'GetSignal')       
-
+        #   !!! RUN  !!!
+ 
     def get(self):
         # method is invoked in order to run the client
-      
-        # configuration of server
-        # inherited class must implement paramters(), which returns a dictionary
-        #   with set of parameters aligned with .proto file definitions
-        p = self.parameters()
-        print('Param message sent: ',p)
-        s = self.sendConfig(**p)
-        r = self.stubConfig(s)
-        print('Confirm response received: ',r)
         
-        # request and process signal
-        #s = self.sendRequest(**{'numSamples':105})
-        s = self.grpcMessage.Request(**{'numSamples':105})
-        #r = self.stubSignal(s)
-        r = self.stub.GetSignal(s)
+        s = self.message.Request(**{'numSamples':self.samples})
+        r = self.channel.GetSignal(s) # server response is a signal
+        
         # r is a generator (to save memory) and thus can only be accessed once
-        # merge streamed responses into two lists stored in memory
+        # use that one chance to merge streamed responses into two lists stored in memory
         reals = []; imags = []
         for sc in r:
             reals.extend(sc.real); imags.extend(sc.imag)

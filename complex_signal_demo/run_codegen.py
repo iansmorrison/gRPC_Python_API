@@ -18,7 +18,7 @@ outcome = protoc.main(
 	'--proto_path=.',
 	'--python_out=' + subDirectory,
 	'--grpc_python_out=' + subDirectory,
-	'./' + NAME_OF_PROTO_FILE + '.proto',
+	'./' + PROTO_FILE + '.proto',
     )
 )
 

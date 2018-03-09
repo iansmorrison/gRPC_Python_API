@@ -19,25 +19,30 @@ class ComplexExponentialServer(css.ComplexSignalServer):
 
   #   !!! DISCOVERY  !!!
 
-  def discovery(self): pass
+  def discovery(self):
+    # method required by ComplexSignalServer
+    # argument is request message from client
+    # returns response message stored in a dictionary
+
+    pass
 
   #   !!! CONFIGURATION  !!!
 
   def configuration(self,request):
     # method required by ComplexSignalServer
-    # passes parameters from the original rpc request Param
-    #   and expects return of parameters from rpc reply Confirm
+    # argument is request message from client
+    # returns response message stored in a dictionary
     
     self.pB = request.phaseBegin
     self.pI = request.phaseIncrement
-    if self.pI >= 0.5:
+    if -0.5 < self.pI < 0.5:
       return {
-        'okay':False,
-        'narrative':'Phase increment violates sampling theorem'
-        }
-    else: return {
         'okay':True,
         'narrative':'Complex exponential will be generated as requested'
+        }
+    else: return {
+        'okay':False,
+        'narrative':'Phase increment violates sampling theorem'
         }
 
    #   !!! RUN  !!!

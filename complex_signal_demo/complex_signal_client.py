@@ -6,8 +6,7 @@ Programmer: David G Messerschmitt
 6 March 2018
 """
 
-#   !!! IF PROTO FILE IS CHANGED, THIS FILE NEEDS TO BE EDITED TO ALIGN NAMES !!!
-
+# !!! IF PROTO FILE IS CHANGED, THIS FILE NEEDS TO BE EDITED TO ALIGN NAMES !!!
 
 import generic_client as gc
 
@@ -20,9 +19,9 @@ class ComplexSignalClient(gc.GenericClientStub):
     def __init__(self):
         super().__init__()
 
-        self.samples = 105 # number of samples to generate and stream
+        self.samples = 205 # number of samples to generate and stream
 
-    #   !!! DISCOVERY  !!!
+    #   !!! DISCOVERY !!!
 
         # not implemented
 
@@ -40,7 +39,7 @@ class ComplexSignalClient(gc.GenericClientStub):
         #   !!! RUN  !!!
  
     def get(self):
-        # method is invoked in order to run the client
+        # method is invoked in order to capture a signal
         
         s = self.message.Request(**{'numSamples':self.samples})
         r = self.channel.GetSignal(s) # server response is a signal

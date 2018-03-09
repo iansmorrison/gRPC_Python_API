@@ -28,8 +28,9 @@ class ComplexSignalServer(gs.GenericServer):
     # pass request to inherited class, which returns message to send back
     # messages are signal-specific, so we do not process content here
     
-    r = self.discovery(request)
-    return self.message.Confirm(**r)
+    signals = self.discovery(request)
+    r = {'signal_name' : signals}
+    return self.message.Answer(**r)
 
   def SetConfig(self,request,context):
     # pass request to inherited class, which returns message to send back

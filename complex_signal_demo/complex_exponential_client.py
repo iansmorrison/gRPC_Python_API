@@ -20,11 +20,21 @@ class ComplexExponentialClient(csc.ComplexSignalClient):
 
     def discovery(self):
         # implements a discovery prototol
-        pass
+        self.ask_question(
+                            {
+                            'what_signal' : True
+                            }
+                        )
 
     def configuration(self):
         # sets server configuration parameters
-        self.set_parameters({'phaseBegin' : 0.,'phaseIncrement' : 0.1})
+        self.set_parameters(
+                                {
+                                'signal_name' : 'cexp',
+                                'phaseBegin' : 0.,
+                                'phaseIncrement' : 0.1
+                                }
+                            )
 
     def run(self):
         # run the client to return complex exponential with parameters()

@@ -19,12 +19,16 @@ class ComplexExponentialServer(css.ComplexSignalServer):
 
   #   !!! DISCOVERY  !!!
 
-  def discovery(self):
+  def discovery(self,request):
     # method required by ComplexSignalServer
     # argument is request message from client
     # returns response message stored in a dictionary
 
-    pass
+    if request.what_signal:
+      return [
+        'cexp: complex exponential',
+        'file: signal stored in file (not yet implemented)'
+        ]
 
   #   !!! CONFIGURATION  !!!
 
@@ -32,17 +36,24 @@ class ComplexExponentialServer(css.ComplexSignalServer):
     # method required by ComplexSignalServer
     # argument is request message from client
     # returns response message stored in a dictionary
-    
+
+    self.signal_name = request.signal_name
     self.pB = request.phaseBegin
     self.pI = request.phaseIncrement
-    if -0.5 < self.pI < 0.5:
+
+    if self.signal_name != 'cexp':
       return {
-        'okay':True,
-        'narrative':'Complex exponential will be generated as requested'
+        'okay' : False,
+        'narrative' : 'Signal description not recognized'
         }
-    else: return {
+    elif not -0.5 < self.pI < 0.5:
+      return {
         'okay':False,
         'narrative':'Phase increment violates sampling theorem'
+        }
+    else: return {
+        'okay':True,
+        'narrative':'Signal will be provided as requested'
         }
 
    #   !!! RUN  !!!

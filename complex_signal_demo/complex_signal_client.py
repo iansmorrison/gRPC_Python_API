@@ -23,8 +23,17 @@ class ComplexSignalClient(gc.GenericClientStub):
 
     #   !!! DISCOVERY !!!
 
-        # not implemented
+    def ask_question(self,p):
+        # inherited class can call this method to query the server
 
+        s = self.message.Question(**p)
+        r = self.channel.Query(s) # returns response message
+
+        print('\nQuery response:')
+        # response is a generator (type of iterator)
+        for name in r.signal_name:
+            print(name)
+        
     #   !!! CONFIGURATION !!!
 
     def set_parameters(self,p):
@@ -32,9 +41,12 @@ class ComplexSignalClient(gc.GenericClientStub):
 
         s = self.message.Param(**p)
         r = self.channel.SetConfig(s) # returns response message
-        
+
+        print('\nSetConfig response:')
         if not r.okay:  # server not satisfied with parameters
             print('Warning! ',r.narrative)
+        else:
+            print('Configuration available:',r.narrative)
 
         #   !!! RUN  !!!
  

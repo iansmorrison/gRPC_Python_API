@@ -5,12 +5,14 @@ This allows us to replace .proto-specific names with generic ones
     and remove these names from the base class program files
 '''
 
-NAME_OF_PROTO_FILE = 'complex_signal'
+NAME_OF_PROTO_FILE = 'complex_exponential'
 
-SERVICE_NAME = 'ComplexSignal'
+SERVICE_NAME = 'ComplexExponential'
 
+# this can be used for exception checking
 RPC_AND_MESSAGE_NAMES = {
-                          'GetSignal' : ['Request', 'Signal']
+                            'SetConfig' : ['Param', 'Confirm'],
+                            'GetSignal' : ['Request', 'Sample']
                           }
 
 #Coordinate client and server ports to they can communicate

@@ -15,18 +15,25 @@ class ComplexExponentialServer(css.ComplexSignalServer):
     super().__init__()
     
     self.samples_sent = 0  # number of signal samples already sent
-    self.last_size = -1  # size of last chunk sent
+    self.last_size = -1  # size of last repeated field sent
 
-  def parameters(self,request):
+  def config(self,request):
 
-    # required method of ComplexSignalServer
-    # passes paramters from the original rpc request
-
-    self.pb = getattr(request,'phaseBegin')
-    self.pi = getattr(request,'phaseIncrement')
-    # request attribute 'numSamples' not needed
-    
-  def signal(self,size):
+    # method required by ComplexSignalServer
+    # passes paramters from the original rpc request Param
+    self.pB = request.phaseBegin
+    self.pI = request.phaseIncrement
+    if self.pI >= 0.5:
+      return {
+        'okay':False,
+        'narrative':'Phase increment violates sampling theorem'
+        }
+    else: return {
+        'okay':True,
+        'narrative':'Complex exponential will be generated'
+        }
+          
+  def generate_signal(self,size):
     
     # required method of ComplexSignalServer
     # returns a chunk of samples as a pair of lists, one real and one imag
@@ -34,12 +41,16 @@ class ComplexExponentialServer(css.ComplexSignalServer):
     # this method will be called repeatedly for streaming, and
     #   so much maintain an internal state between calls
 
+    # added for debug
+    self.pB = 0.
+    self.pI = 0.1
+    
     if size != self.last_size:  # Allocate new memory for samples
       self.real = [None] * size; self.imag = [None] * size
     
     for i in range(size):
  
-      phase = self.pb + self.pi * (self.samples_sent + i)
+      phase = self.pB + self.pI * (self.samples_sent + i)
       self.real[i] = cos(2*pi*phase)
       self.imag[i] = sin(2*pi*phase)
         

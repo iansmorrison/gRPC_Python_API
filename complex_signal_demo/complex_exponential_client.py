@@ -16,12 +16,11 @@ class ComplexExponentialClient(csc.ComplexSignalClient):
     def __init__(self):
         super().__init__()
 
-    # This method provides the configuration of the server
+    # This method provides parameters for the configuration of the server
     # phaseBegin and phaseIncrement are fractions of 2*pi radians
     # Note that phaseIncrement = analog frequency * analog sampling interval
-
     def parameters(self):
-        return {'phaseBegin':0,'phaseIncrement':0.1,'numSamples':105}
+        return {'phaseBegin' : 0.,'phaseIncrement' : 0.1}
 
     # The following methods invokes super class to instantiate the run the client
     #   assumed to implemment get()

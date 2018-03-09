@@ -24,9 +24,17 @@ class ComplexSignalServer(gs.GenericServer):
   #   request and sends response as defined in .proto file
   # name of method == name of rpc channel
 
-  def SetConfig(self,request,context):
+  def Query(self,request,context):
+    # pass request to inherited class, which returns message to send back
+    # messages are signal-specific, so we do not process content here
+    
+    r = self.discovery(request)
+    return self.message.Confirm(**r)
 
-    # pass Param to inherited class, which returns message to send back
+  def SetConfig(self,request,context):
+    # pass request to inherited class, which returns message to send back
+    # messages are signal-specific, so we do not process content here
+    
     r = self.configuration(request)
     return self.message.Confirm(**r)
   

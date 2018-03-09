@@ -11,6 +11,7 @@ SERVICE = 'ComplexExponential'
 
 # this can be used for exception checking
 RPC_AND_MESSAGE_NAMES = {
+                            'Query' : ['Question', 'Answer'],
                             'SetConfig' : ['Param', 'Confirm'],
                             'GetSignal' : ['Request', 'Sample']
                           }

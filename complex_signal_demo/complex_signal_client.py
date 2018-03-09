@@ -6,10 +6,8 @@ Programmer: David G Messerschmitt
 6 March 2018
 """
 
-#   !!! NOT NECESSARY TO EDIT THIS FILE UNLESS PROTO FILE NAMES ARE CHANGED !!!
-#   ComplexSignal Client assumes:
-#       rpc channel is 'GetSignal'
-#       request message is 'Request'
+#   !!! IF PROTO FILE IS CHANGED, THIS FILE NEEDS TO BE EDITED TO ALIGN NAMES !!!
+
 
 import generic_client as gc
 
@@ -20,37 +18,36 @@ class ComplexSignalClient(gc.GenericClientStub):
     '''
 
     def __init__(self):
-        super().__init__()       
+        super().__init__()
 
+        self.samples = 105 # number of samples to generate and stream
+
+    #   !!! DISCOVERY  !!!
+
+        # not implemented
+
+    #   !!! CONFIGURATION !!!
+
+    def set_parameters(self,p):
+        # inherited class can call this method to set parameters of the server
+
+        s = self.message.Param(**p)
+        r = self.channel.SetConfig(s) # returns response message
+        
+        if not r.okay:  # server not satisfied with parameters
+            print('Warning! ',r.narrative)
+
+        #   !!! RUN  !!!
+ 
     def get(self):
-        '''
-        This method is invoked in order to run the client, which interacts with the rpc client stub
-        Its purpose is to generate rpc messages, interpret the responses from
-            the server, and generate new rpc messages
-        This is an implementation of a complex signal demo
-        '''
-
-        # send request for a complex signal
+        # method is invoked in order to run the client
         
-        # inherited class must implement request(), which returns the name
-        #   of the request message aligned with the .proto file definition
-        self.sendMessage = getattr(self.grpcMessage,'Request')
+        s = self.message.Request(**{'numSamples':self.samples})
+        r = self.channel.GetSignal(s) # server response is a signal
         
-        # inherited class must implement paramters(), which returns a dictionary
-        #   with set of parameters aligned with .proto file definitions
-        send = self.sendMessage(**self.parameters())
-        
-        # inherited class must implement rpc(), which returns the name
-        #   of the rpc channel aligned with the .proto file definition
-        stub = getattr(self.stub,'GetSignal')
-
-        # access the complex signal in response by invoking the client stub
-        r = stub(send)
         # r is a generator (to save memory) and thus can only be accessed once
-        
-        # merge streamed responses into two lists stored in memory
+        # use that one chance to merge streamed responses into two lists stored in memory
         reals = []; imags = []
         for sc in r:
             reals.extend(sc.real); imags.extend(sc.imag)
-
         return [reals,imags]

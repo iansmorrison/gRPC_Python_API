@@ -1,0 +1,49 @@
+/*
+Demo of RPC access to a complex-valued signal
+We group samples together in a repeated field for efficiency
+   but also stream these messages to handle very large signals
+
+Programmer: David G Messerschmitt
+7 March 2018
+*/
+
+syntax = "proto3";
+
+//package complex_exponential;
+
+service ComplexExponential {
+
+	rpc SetConfig (Param) returns (Confirm);
+	rpc GetSignal (Request) returns (stream Sample);
+}
+
+
+message Param {
+
+	// Phases are a fraction of 2*pi
+	float phaseBegin = 1;
+
+	// According to sampling theorem, must have phaseIncrement < 0.5
+	float phaseIncrement = 2;
+}
+
+
+message Confirm {
+
+	bool okay = 1;	// True if Param acceptable
+	string narrative = 2; // Optional error message
+}
+
+
+message Request {
+
+	int32 numSamples = 1;
+}
+
+
+message Sample {
+	
+	repeated float real = 1;
+	repeated float imag = 2;
+}
+

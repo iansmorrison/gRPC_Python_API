@@ -1,0 +1,40 @@
+/*
+Demo of RPC access to a signal provided by the server
+We group samples together in a repeated field for efficiency
+   but also stream these messages to handle very large signals
+
+Programmer: David G Messerschmitt
+7 March 2018
+*/
+
+syntax = "proto3";
+
+service SignalServerToClient {
+
+	rpc MetaData (Parameters) returns (Parameters);
+	rpc OneDimensional (Parameters) returns (stream ComplexSamples);
+	rpc TwoDimensional (Parameters) returns (stream ComplexArray);
+}
+
+
+// Metadata
+
+message Parameters {
+
+	string operation = 1;
+	string error_messsage = 2;
+	string signal_type = 3;
+	string parameter_values = 4;
+	}
+
+// Signal
+
+message ComplexSamples {
+	
+	repeated float real = 1;
+	repeated float imag = 2;
+	}
+
+message ComplexArray {
+	}
+

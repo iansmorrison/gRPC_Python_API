@@ -2,12 +2,13 @@
 The Python implementation of the ComplexSignalClient
 This version uses a both a repeated field (for efficiency)
   and streaming (for long responses) to return multiple complex samples
+  
 Programmer: David G Messerschmitt
-2 March 2018
+18 March 2018
 """
 from numpy import round
 
-import complex_signal_client as csc
+import signal_client as csc
 
 class ComplexExponentialClient(csc.ComplexSignalClient):
     # Client which retreives a complex exonential, making use of the
@@ -19,22 +20,25 @@ class ComplexExponentialClient(csc.ComplexSignalClient):
     # There are three phases: discovery, configuration, and run
 
     def discovery(self):
-        # implements a discovery prototol
-        self.ask_question(
-                            {
-                            'what_signal' : True
-                            }
-                        )
+        # get information about service
+        print('\nSend help query:')
+        self.config_message_and_response('help',{})
+        
 
     def configuration(self):
         # sets server configuration parameters
-        self.set_parameters(
-                                {
-                                'signal_name' : 'cexp',
-                                'phaseBegin' : 0.,
-                                'phaseIncrement' : 0.1
-                                }
-                            )
+
+        # get list of parameters and their defaults from server
+        print('\nSend default query:')
+        [p,a] = self.config_message_and_response('default',{})
+
+        # change defaults as desired
+        p['numSamples'] = 205
+        p['phaseIncrement'] = 0.1
+
+        # configure the server parameters
+        print('\nSend set config:')
+        self.config_message_and_response('set',p)                                      
 
     def run(self):
         # run the client to return complex exponential with parameters()

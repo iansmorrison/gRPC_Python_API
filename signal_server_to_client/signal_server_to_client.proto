@@ -1,40 +1,63 @@
 /*
-Demo of RPC access to a signal provided by the server
-We group samples together in a repeated field for efficiency
-   but also stream these messages to handle very large signals
+Demo of RPC access to a signal provided by a server to a client
+We group samples or arrays together in a repeated field for efficiency
+   but also stream these repeated samples or arrays to handle long signals
 
 Programmer: David G Messerschmitt
-7 March 2018
+16 March 2018
 */
 
 syntax = "proto3";
 
 service SignalServerToClient {
 
-	rpc MetaData (Parameters) returns (Parameters);
-	rpc OneDimensional (Parameters) returns (stream ComplexSamples);
-	rpc TwoDimensional (Parameters) returns (stream ComplexArray);
+	// Back-and-forth needed to coordinate server with client
+	rpc MetaDataCoordination (Config) returns (Info);
+
+	// Signal consisting of a stream of complex-valued samples
+	rpc OneDimensionalSignal (Config) returns (stream ComplexSample);
+
+	// Signal consisting of a stream of complex-valued arrays
+	rpc TwoDimensionalSignal (Config) returns (stream ComplexArray);
 }
 
 
-// Metadata
+message Config {
 
-message Parameters {
+	// All fields carry a JSON reprsentation of a map (key-value pairs)
+	// 	(in Python, this is converted from a dictonary)
 
+	// What info should the server provide or what should the server do?
 	string operation = 1;
-	string error_messsage = 2;
-	string signal_type = 3;
-	string parameter_values = 4;
+
+	// Here are the numerical values of parameters
+	string parameters = 2;
 	}
 
-// Signal
+message Info {
 
-message ComplexSamples {
+	// All fields carry a JSON reprsentation of a map (key-value pairs)
+	// 	(in Python, this is converted from a dictonary)
+
+	// Here is the information requested by the client
+	string response = 1;
+
+	// What issues or information not specifically requested 
+	//	should the client be aware of?
+	string alert = 2;
+	}
+
+message ComplexSample {
+
+	// // What issues or information not specifically requested 
+	//	should the client be aware of?
+	string alert = 1;
 	
-	repeated float real = 1;
-	repeated float imag = 2;
+	repeated float real = 2;
+	repeated float imag = 3;
 	}
 
 message ComplexArray {
+
 	}
 

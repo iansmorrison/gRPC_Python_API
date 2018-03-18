@@ -22,4 +22,5 @@ outcome = protoc.main(
     )
 )
 
+# outcome = 0 indicates no compiliation errors
 print(outcome)

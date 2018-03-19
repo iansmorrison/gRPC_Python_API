@@ -7,6 +7,7 @@ Programmer: David G Messerschmitt
 18 March 2018
 """
 from numpy import round
+from pprint import pprint
 
 import signal_client as csc
 
@@ -21,24 +22,29 @@ class ComplexExponentialClient(csc.ComplexSignalClient):
 
     def discovery(self):
         # get information about service
-        print('\nSend help query:')
-        self.config_message_and_response('help',{})
+        [r,a] = self.metadata_message_and_response('help',{})
+        print('\nParameters supported by server:\n')
+        pprint(r)
         
 
     def configuration(self):
         # sets server configuration parameters
 
-        # get list of parameters and their defaults from server
-        print('\nSend default query:')
-        [p,a] = self.config_message_and_response('default',{})
+        # from server, get list of parameters and their defaults
+        [p,a] = self.metadata_message_and_response('default',{})
+        print('\nDefault values of parameters:\n')
+        pprint(p)
 
         # change defaults as desired
         p['numSamples'] = 205
         p['phaseIncrement'] = 0.1
 
         # configure the server parameters
-        print('\nSend set config:')
-        self.config_message_and_response('set',p)                                      
+        print('\nParameters sent to server:\n')
+        pprint(p)
+        [p,a] = self.metadata_message_and_response('set',p)
+        if a != '':
+            print(a)
 
     def run(self):
         # run the client to return complex exponential with parameters()
@@ -47,6 +53,7 @@ class ComplexExponentialClient(csc.ComplexSignalClient):
 
     def report(self, resolution=3):
         # print result to standard output with specified resolution
+        print('\nReturned complex-valued signal:')
         print('\nReal part of complex exponential ({0} samples):\n'.format(len(self.reals)))
         print(round(self.reals,resolution))
         print('\nImag part of complex exponential ({0} samples):\n'.format(len(self.imags)))

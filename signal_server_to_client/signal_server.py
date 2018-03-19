@@ -54,17 +54,14 @@ class OneDimensionalSignalServer(gs.GenericServer):
   def OneDimensionalSignal(self,request,context):
     # responds to request for streamng of complex signal
     # manages the splitting of signal into repeated fields
-    # must know self.ns = number of samples, which is provided
-    #   by inherited class
-    
-    #self.ns = getattr(request,'numSamples')
-    # temporary fix
-    #self.ns = 205
+
+    # do nothing if something has gone wrong previously
+    if self.abort: return
     
     # Number of responses in each repeated field
-    self.nr = floor(self.ns/NUM_MESSAGES_PER_RESPONSE)
+    self.nr = floor(self.numSamples/NUM_MESSAGES_PER_RESPONSE)
     # Size of last remaining repeated field
-    self.nlo = self.ns % NUM_MESSAGES_PER_RESPONSE
+    self.nlo = self.numSamples % NUM_MESSAGES_PER_RESPONSE
 
     for j in range(self.nr): # iterate over signal chunks
 

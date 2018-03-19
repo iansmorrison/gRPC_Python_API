@@ -18,6 +18,10 @@ class ComplexExponentialServer(css.OneDimensionalSignalServer):
     self.parameters = self.param_define()
     self.defaults = self.param_default(self.parameters)
 
+    # if an error occurs, setting this variable to False will
+    #   stop further actions
+    self.abort = False
+
     # internal state preserved from one call to the next
     self.samples_sent = 0  # number of signal samples already sent
     self.last_size = -1  # size of last repeated field sent
@@ -86,31 +90,38 @@ by sampling theorem, must be between -0.5 and +0.5',
       # check availability of all parameters and enforced bounds
       # avoid Python exceptions since client platform may not support this
 
-      # override default values where client has specified them
+      # keep going until abort = True
+      self.abort = False
+
+      # override default values (where client has specified them)
       p = self.defaults.copy()
       p.update(param)
-
-      print('debug: ',param,self.defaults,p)
 
       # make sure all parameters have been specified
       for field in p.keys():
         if p[field] == None:
-          return [{},'Error: parameter {0} must be specified'.format(field)] 
+          self.abort = True
+          return [{},"Error: parameter '{0}' must be specified".format(field)]
 
       # confirm that all parameters fall within bounds
-      for fields in self.parameters.keys():
-        if 'minimum' in self.parameters[field]:
-          if p[field] < self.parameters[field]['minimum']:
-            return [{},'Error: parameter {} below minimum'.format(field)]
-        if 'maximum' in self.parameters[field]:
-          if p[field] > self.parameters[field]['maximum']:
-            return [{},'Error: parameter {} above maximum'.format(field)]
+      if not self.abort:
+        for fields in self.parameters.keys():
+          if 'minimum' in self.parameters[field]:
+            if p[field] < self.parameters[field]['minimum']:
+              self.abort = True
+              return [{},'Error: parameter {} below minimum'.format(field)]
+          if 'maximum' in self.parameters[field]:
+            if p[field] > self.parameters[field]['maximum']:
+              self.abort = True
+              return [{},'Error: parameter {} above maximum'.format(field)]
 
       # at this point all parameters in p are specified and consistent
       # store them in the object state
-      self.ns = p['numSamples']
-      self.pB = p['phaseInitial']
-      self.pI = p['phaseIncrement']
+      # copy parameters to variables for computational efficiency
+      # Example: p['numSamples'] is copied as self.numSamples
+      if not self.abort:
+        for param in p.keys():
+          setattr(self,param,p[param])
         
       return [p,'']
 
@@ -130,7 +141,7 @@ by sampling theorem, must be between -0.5 and +0.5',
     
     for i in range(size):
  
-      phase = self.pB + self.pI * (self.samples_sent + i)
+      phase = self.phaseInitial+self.phaseIncrement*(self.samples_sent+i)
       self.real[i] = cos(2*pi*phase)
       self.imag[i] = sin(2*pi*phase)
         
@@ -138,8 +149,8 @@ by sampling theorem, must be between -0.5 and +0.5',
     self.last_size = size
     
     return [self.real,self.imag]
-         
-    
+
+
 if __name__ == '__main__':
 
   s = ComplexExponentialServer()

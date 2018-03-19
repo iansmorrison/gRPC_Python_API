@@ -26,7 +26,7 @@ class ComplexSignalClient(gc.GenericClientStub):
 
     #   !!! CONFIGURATION !!!
 
-    def config_message_and_response(self,op,param):
+    def metadata_message_and_response(self,op,param):
         # inherited class can call this method to send an
         #   operation to the server
         #       op = string specifying desired operation
@@ -37,14 +37,7 @@ class ComplexSignalClient(gc.GenericClientStub):
         p = {'operation':op,'parameters':json.dumps(param)}
         s = self.message.Config(**p)
         r = self.channel.MetaDataCoordination(s) # returns response message
-        [response,alert] = [json.loads(r.response),r.alert]
-
-        print('\nConfig response Info:')
-        print('Alert: ',alert)
-        print('Response:')
-        pprint(response)
-
-        return [response,alert]
+        return [json.loads(r.response),r.alert]
 
     #   !!! RUN  !!!
  

@@ -44,7 +44,7 @@ class ComplexExponentialClient(csc.ComplexSignalClient):
         pprint(p)
         [p,a] = self.metadata_message_and_response('set',p)
         if a != '':
-            print(a)
+            print('\nAlert from server: ',a)
 
     def run(self):
         # run the client to return complex exponential with parameters()

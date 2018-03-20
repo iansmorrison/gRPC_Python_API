@@ -81,3 +81,32 @@ class OneDimensionalSignalServer(gs.GenericServer):
       [real,imag] = self.generate_signal(start,size)
       r = {'alert':'','real' : real,'imag' : imag}
       yield self.message.ComplexSample(**r)
+
+class Parameters:
+  # To make implementation of server easier, class
+  #   provides some useful functions to store and manage parameters
+
+  def __init__(self,p):
+    
+    # Argument p = provided parameter dictionary
+    self.p = p
+
+    # Extract and a dictionary with only default values
+    self.d = {}   
+    for field in self.p.keys():
+      if 'default' in self.p[field]:
+        self.d[field] = self.p[field]['default']
+
+  def parameters(self):
+    return self.p
+  
+  def defaults(self):
+    return self.d
+
+  def override_defaults(self,p):
+    # p = dictionary of values
+    # returns self.d overridden by p
+    t = self.d.copy()
+    t.update(p)
+    return t
+  

@@ -36,10 +36,10 @@ class ComplexExponentialClient(csc.ComplexSignalClient):
         pprint(p)
 
         # change defaults as desired
-        p = {'numSamples':205,'phaseIncrement':0.1}
+        p = {'num_samples':205,'phase_increment':0.1}
 
         # configure the server parameters
-        print('\nParameters sent to server:\n')
+        print('\nChosen parameters sent to server:\n')
         pprint(p)
         [p,a] = self.metadata_message_and_response('set',p)
         if a != '':

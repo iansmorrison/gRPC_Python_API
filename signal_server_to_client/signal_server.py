@@ -8,6 +8,7 @@ Progammer David G Messerschmitt
 import importlib
 import json
 from math import floor
+from pprint import pprint
 
 import generic_server as gs
 
@@ -20,6 +21,54 @@ class OneDimensionalSignalServer(gs.GenericServer):
   
   def __init__(self):
     super().__init__()
+
+    # instantiate object managing parameters
+    # param_define() returns the parameter dictionary
+    self.param = Parameters(self.param_define())
+
+  def dispatch(self,op,p):
+    #   op = string from client specifying operation
+    #   p = dictonary from client specifying parameters
+    # returns [response,alert] to be transmitted to client
+    #   response = dictonary storing requested info
+    #   alert = string containing info not specifically requested
+
+    if op == 'help':
+      return [self.param.parameters(),'']
+
+    elif op == 'default':
+      return [self.param.defaults(),'']
+
+    elif op == 'set':
+      # check availability of all parameters and enforced bounds
+      # avoid Python exceptions since client platform may not support this
+
+      # abort = True further actions are skipped
+      self.abort = False
+
+      # override default values (where client has specified them)
+      self.param.update(p)
+
+      # make sure all parameters have been specified
+      field = self.param.complete()
+      if field:
+        self.abort = True
+        return [{},"Error: parameter '{0}' must be specified".format(field)]
+
+      # confirm that all parameters fall within bounds
+      field = self.param.bounds()
+      if field:
+        self.abort = True
+        return [{},'Error: parameter {} out of bounds'.format(field)]
+      
+      # copy parameters to variables for computational efficiency
+      # Example: p['numSamples'] is copied as self.numSamples
+      if not self.abort:
+        p = self.param.final()
+        for field in p.keys():
+          setattr(self,field,p[field])
+        
+      return [self.param.final(),'']
 
   # a method must be provided for each rpc channel that processes
   #   request and sends response as defined in .proto file
@@ -59,16 +108,16 @@ class OneDimensionalSignalServer(gs.GenericServer):
     if self.abort: return
     
     # Number of responses in each repeated field
-    self.nr = floor(self.numSamples/NUM_MESSAGES_PER_RESPONSE)
+    self.nr = floor(self.num_samples/NUM_MESSAGES_PER_RESPONSE)
     # Size of last remaining repeated field
-    self.nlo = self.numSamples % NUM_MESSAGES_PER_RESPONSE
+    self.nlo = self.num_samples % NUM_MESSAGES_PER_RESPONSE
     size = NUM_MESSAGES_PER_RESPONSE
     
     for j in range(self.nr): # iterate over repeated fields
 
       # send real and imag repeated fields
       start = NUM_MESSAGES_PER_RESPONSE*j
-      [real,imag] = self.generate_signal(start,size)
+      [real,imag] = self.signal_gen(start,size)
       r = {'alert':'','real' : real,'imag' : imag}
       yield self.message.ComplexSample(**r)
 
@@ -78,7 +127,7 @@ class OneDimensionalSignalServer(gs.GenericServer):
     else:
       start = NUM_MESSAGES_PER_RESPONSE*self.nr
       size = self.nlo
-      [real,imag] = self.generate_signal(start,size)
+      [real,imag] = self.signal_gen(start,size)
       r = {'alert':'','real' : real,'imag' : imag}
       yield self.message.ComplexSample(**r)
 

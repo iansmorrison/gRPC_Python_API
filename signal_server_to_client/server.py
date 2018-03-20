@@ -23,6 +23,7 @@ class ComplexExponentialServer(css.OneDimensionalSignalServer):
 
     self.parameters = self.param.parameters()
     self.defaults = self.param.defaults()
+    self.finals = {}
     
 ##    # generate parameter dictionaries for this signal semantics
 ##    self.parameters = self.param_define()
@@ -67,19 +68,6 @@ by sampling theorem, must be between -0.5 and +0.5',
                     }
 
     return p
-
-##  def param_default(self,param):
-##    # param = dictionary of parameters
-##    # returns dictionary populated with parameter default values
-##    #   using information derived from param
-##    # this is an authoritative list of parameters that must
-##    #   be specified by either client or by default
-##    
-##    defaults = {}   
-##    for field in param.keys():
-##      if 'default' in param[field]:
-##        defaults[field] = param[field]['default']       
-##    return defaults
       
   def dispatch(self,op,p):
     # method required by OneDimensionalSignalServer
@@ -103,37 +91,34 @@ by sampling theorem, must be between -0.5 and +0.5',
       self.abort = False
 
       # override default values (where client has specified them)
-##      p = self.defaults.copy()
-##      p.update(param)
-      po = self.param.override_defaults(p)
+      self.param.update(p)
 
       # make sure all parameters have been specified
-      for field in po.keys():
-        if po[field] == None:
-          self.abort = True
-          return [{},"Error: parameter '{0}' must be specified".format(field)]
+      field = self.param.complete()
+      if field:
+        self.abort = True
+        return [{},"Error: parameter '{0}' must be specified".format(field)]
 
       # confirm that all parameters fall within bounds
-      if not self.abort:
-        for fields in self.parameters.keys():
-          if 'minimum' in self.parameters[field]:
-            if po[field] < self.parameters[field]['minimum']:
-              self.abort = True
-              return [{},'Error: parameter {} below minimum'.format(field)]
-          if 'maximum' in self.parameters[field]:
-            if po[field] > self.parameters[field]['maximum']:
-              self.abort = True
-              return [{},'Error: parameter {} above maximum'.format(field)]
+      field = self.param.bounds()
+      if field:
+        self.abort = True
+        return [{},'Error: parameter {} out of bounds'.format(field)]
 
-      # at this point all parameters in p are specified and consistent
-      # store them in the object state
+      # at this point all parameters in p are complete and consistent
+      # store them in this object state for efficiency
+      if not self.abort:
+        self.finals = self.param.final()
+        print('\nFinal values:\n')
+        pprint(self.finals)
+      
       # copy parameters to variables for computational efficiency
       # Example: p['numSamples'] is copied as self.numSamples
       if not self.abort:
-        for name in po.keys():
-          setattr(self,name,po[name])
+        for field in self.finals.keys():
+          setattr(self,field,self.finals[field])
         
-      return [po,'']
+      return [self.finals,'']
 
    #   !!! SIGNAL GENERATION UPON REQUEST  !!!
          

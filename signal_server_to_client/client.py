@@ -36,8 +36,7 @@ class ComplexExponentialClient(csc.ComplexSignalClient):
         pprint(p)
 
         # change defaults as desired
-        p['numSamples'] = 205
-        p['phaseIncrement'] = 0.1
+        p = {'numSamples':205,'phaseIncrement':0.1}
 
         # configure the server parameters
         print('\nParameters sent to server:\n')

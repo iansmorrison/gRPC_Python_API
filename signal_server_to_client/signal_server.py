@@ -62,18 +62,22 @@ class OneDimensionalSignalServer(gs.GenericServer):
     self.nr = floor(self.numSamples/NUM_MESSAGES_PER_RESPONSE)
     # Size of last remaining repeated field
     self.nlo = self.numSamples % NUM_MESSAGES_PER_RESPONSE
+    size = NUM_MESSAGES_PER_RESPONSE
+    
+    for j in range(self.nr): # iterate over repeated fields
 
-    for j in range(self.nr): # iterate over signal chunks
-
-      # send two repeated fields
-      [real,imag] = self.generate_signal(NUM_MESSAGES_PER_RESPONSE)
+      # send real and imag repeated fields
+      start = NUM_MESSAGES_PER_RESPONSE*j
+      [real,imag] = self.generate_signal(start,size)
       r = {'alert':'','real' : real,'imag' : imag}
       yield self.message.ComplexSample(**r)
 
     # last remaining repeated field
-    if self.nlo == 0: # not needed
+    if self.nlo == 0: # we are done
       yield None
     else:
-      [real,imag] = self.generate_signal(self.nlo)
+      start = NUM_MESSAGES_PER_RESPONSE*self.nr
+      size = self.nlo
+      [real,imag] = self.generate_signal(start,size)
       r = {'alert':'','real' : real,'imag' : imag}
       yield self.message.ComplexSample(**r)

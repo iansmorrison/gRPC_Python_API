@@ -18,13 +18,12 @@ class ComplexExponentialServer(css.OneDimensionalSignalServer):
     self.parameters = self.param_define()
     self.defaults = self.param_default(self.parameters)
 
+    # establish name for lists containing repeated fields
+    self.real = []; self.imag = []
+
     # if an error occurs, setting this variable to False will
     #   stop further actions
     self.abort = False
-
-    # internal state preserved from one call to the next
-    self.samples_sent = 0  # number of signal samples already sent
-    self.last_size = -1  # size of last repeated field sent
 
   #   !!! CONFIGURATION  !!!
 
@@ -128,26 +127,23 @@ by sampling theorem, must be between -0.5 and +0.5',
 
    #   !!! SIGNAL GENERATION UPON REQUEST  !!!
          
-  def generate_signal(self,size):
+  def generate_signal(self,start,size):
     
     # required method of ComplexSignalServer
     # returns a repeated field of samples as a pair of lists
     # size = number of samples requested
     # this method will be called repeatedly for streaming, and
     #   so must maintain an internal state between calls
-    
-    if size is not self.last_size:  # Allocate new memory for samples
+
+    # Allocate new memory for samples (unless already allocated)
+    if len(self.real) != size:
       self.real = [None] * size; self.imag = [None] * size
     
     for i in range(size):
- 
-      phase = self.phaseInitial+self.phaseIncrement*(self.samples_sent+i)
+      phase = self.phaseInitial+self.phaseIncrement*(start+i)
       self.real[i] = cos(2*pi*phase)
       self.imag[i] = sin(2*pi*phase)
-        
-    self.samples_sent += size
-    self.last_size = size
-    
+            
     return [self.real,self.imag]
 
 

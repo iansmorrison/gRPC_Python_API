@@ -22,5 +22,7 @@ outcome = protoc.main(
     )
 )
 
-# outcome = 0 indicates no compiliation errors
-print(outcome)
+if outcome == 0:
+    print('No errors in compilation')
+else:
+    print('Error occurred in compilation: Error ',outcome)

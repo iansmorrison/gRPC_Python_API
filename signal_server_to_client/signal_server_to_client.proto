@@ -17,8 +17,6 @@ service SignalServerToClient {
 	// Signal consisting of a stream of complex-valued samples
 	rpc OneDimensionalSignal (Config) returns (stream ComplexSample);
 
-	// Signal consisting of a stream of complex-valued arrays
-	rpc TwoDimensionalSignal (Config) returns (stream ComplexArray);
 }
 
 
@@ -37,7 +35,7 @@ message Config {
 message Info {
 
 	// All fields carry a JSON reprsentation of a map (key-value pairs)
-	// 	(in Python, this is converted from a dictonary)
+	// 	(in Python this is converted from a dictonary)
 
 	// Here is the information requested by the client
 	string response = 1;
@@ -51,13 +49,15 @@ message ComplexSample {
 
 	// // What issues or information not specifically requested 
 	//	should the client be aware of?
-	string alert = 1;
 	
-	repeated float real = 2;
-	repeated float imag = 3;
+	repeated Complex sample = 1;
+
+	// What issues should client be aware of?
+	string alert = 2;
 	}
 
-message ComplexArray {
+message Complex {
 
+	float real = 1;
+	float imag = 2;
 	}
-

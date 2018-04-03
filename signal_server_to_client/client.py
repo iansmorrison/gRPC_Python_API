@@ -48,15 +48,11 @@ class ComplexExponentialClient(csc.ComplexSignalClient):
     def run(self):
         # run the client to return complex exponential with parameters()
         # super class provides get(), which receives a streamed complex signal
-        [self.reals,self.imags] = self.get()
+        # get() returns a generator, so it can be interated only once
+        # to access it later, have to store in a list
 
-    def report(self, resolution=3):
-        # print result to standard output with specified resolution
-        print('\nReturned complex-valued signal:')
-        print('\nReal part of complex exponential ({0} samples):\n'.format(len(self.reals)))
-        print(round(self.reals,resolution))
-        print('\nImag part of complex exponential ({0} samples):\n'.format(len(self.imags)))
-        print(round(self.imags,resolution))
+        for samples in self.get():
+            print('\nPacket:\n',samples)
                   
 
 if __name__ == '__main__':
@@ -64,4 +60,4 @@ if __name__ == '__main__':
  c.discovery()
  c.configuration()
  c.run()
- c.report()
+## c.report()

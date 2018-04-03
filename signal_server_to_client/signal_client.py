@@ -10,6 +10,7 @@ Programmer: David G Messerschmitt
 # !!! IF PROTO FILE IS CHANGED, THIS FILE MUST BE EDITED TO ALIGN NAMES !!!
 
 import json
+import inspect
 from pprint import pprint
 import generic_client as gc
 
@@ -49,11 +50,17 @@ class ComplexSignalClient(gc.GenericClientStub):
                         'operation':'get',
                         'parameters':json.dumps('')
                         })
-        r = self.channel.OneDimensionalSignal(s) # r = signal samples
+        r = self.channel.OneDimensionalSignal(s) # r = list of signal samples
         
         # r is a generator (to conserve memory) and thus can only be accessed once
-        # use that one chance to merge streamed responses into two lists stored in memory
-        reals = []; imags = []
+        # lets use that one chance to merge streamed responses into two lists stored in memory
+
+
         for sc in r:
-            reals.extend(sc.real); imags.extend(sc.imag)
-        return [reals,imags]
+            num_samples = len(sc.sample)
+            samples = [None] * num_samples # number of samples in one repeated field
+            for i in range(num_samples):
+                # convert to a complex data type and store in a list
+                samples[i] = complex(sc.sample[i].real,sc.sample[i].imag)
+            yield samples
+

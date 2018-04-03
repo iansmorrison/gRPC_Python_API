@@ -7,6 +7,7 @@ Progammer David G Messerschmitt
 """
 import importlib
 import json
+import cmath
 from math import floor
 from pprint import pprint
 
@@ -117,9 +118,18 @@ class OneDimensionalSignalServer(gs.GenericServer):
 
       # send real and imag repeated fields
       start = NUM_MESSAGES_PER_RESPONSE*j
-      [real,imag] = self.signal_gen(start,size)
-      r = {'alert':'','real' : real,'imag' : imag}
+##      [real,imag] = self.generate(start,size)
+##      r = {'alert':'','real' : real,'imag' : imag}
+##      yield self.message.ComplexSample(**r)
+      
+      sample = self.generate(start,size)
+      # convert to an array of Complex messages
+      for i in range(len(sample)):
+        r = {'real':sample[i].real,'imag':sample[i].imag}
+        sample[i] = self.message.Complex(**r)
+      r = {'alert':'','sample' : sample}
       yield self.message.ComplexSample(**r)
+      
 
     # last remaining repeated field
     if self.nlo == 0: # we are done
@@ -127,8 +137,16 @@ class OneDimensionalSignalServer(gs.GenericServer):
     else:
       start = NUM_MESSAGES_PER_RESPONSE*self.nr
       size = self.nlo
-      [real,imag] = self.signal_gen(start,size)
-      r = {'alert':'','real' : real,'imag' : imag}
+##      [real,imag] = self.generate(start,size)
+##      r = {'alert':'','real' : real,'imag' : imag}
+##      yield self.message.ComplexSample(**r)
+
+      sample = self.generate(start,size)
+      # convert to an array of Complex messages
+      for i in range(len(sample)):
+        r = {'real':sample[i].real,'imag':sample[i].imag}
+        sample[i] = self.message.Complex(**r)
+      r = {'alert':'','sample' : sample}
       yield self.message.ComplexSample(**r)
 
 class Parameters:

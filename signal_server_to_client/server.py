@@ -4,7 +4,8 @@ The Python implementation of a server that returns a
 Progammer David G Messerschmitt
 18 March 2018
 """
-from math import pi,sin,cos
+##from math import pi,sin,cos
+import cmath
 
 import signal_server as css
 
@@ -15,7 +16,8 @@ class ComplexExponentialServer(css.OneDimensionalSignalServer):
     super().__init__()
   
     # add names for lists containing repeated fields
-    self.real = []; self.imag = []
+##    self.real = []; self.imag = []
+    self._output = []
 
   def param_define(self):
     # defines the parameters for this signal, their bounds and their defaults
@@ -49,7 +51,7 @@ by sampling theorem, must be between -0.5 and +0.5',
     return p
       
          
-  def signal_gen(self,start,size):
+  def generate(self,start,duration):
     
     # required method of ComplexSignalServer
     # returns a repeated field of samples as a pair of lists
@@ -58,15 +60,19 @@ by sampling theorem, must be between -0.5 and +0.5',
     #   so must maintain an internal state between calls
 
     # Allocate new memory for samples (unless already allocated)
-    if len(self.real) != size:
-      self.real = [None] * size; self.imag = [None] * size
+##    if len(self.real) != duration:
+##      self.real = [None] * duration; self.imag = [None] * duration
+    if len(self._output) != duration:
+      self._output = [None] * duration
     
-    for i in range(size):
+    for i in range(duration):
       phase = self.phase_initial+self.phase_increment*(start+i)
-      self.real[i] = cos(2*pi*phase)
-      self.imag[i] = sin(2*pi*phase)
+##      self.real[i] = cos(2*pi*phase)
+##      self.imag[i] = sin(2*pi*phase)
+      self._output[i] = cmath.exp(2*cmath.pi*phase*1j)
             
-    return [self.real,self.imag]
+##    return [self.real,self.imag]
+    return self._output
 
 
 if __name__ == '__main__':

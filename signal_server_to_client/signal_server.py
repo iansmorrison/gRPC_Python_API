@@ -11,28 +11,37 @@ import cmath
 from math import floor
 from pprint import pprint
 
+import buffer
 import generic_server as gs
 
 from PROTO_DEFINITIONS import *
 
-# Configuration
-NUM_MESSAGES_PER_RESPONSE = 10  # Adjust for efficiency
+# number of gRPC repeated fields, which affects network throughput
+# too small and there are a lot of small packets; too large and
+#   the network has to fragment the packets
+REPEATED_FIELD_COUNT = 10
 
-class OneDimensionalSignalServer(gs.GenericServer):
+
+class StreamingSignalServer(gs.GenericServer):
   
-  def __init__(self):
+  def __init__(self,p,b,g):
+    # p = instance of Parameters class
+    # b = instance of ListBuffer class
+    # g = instance of signal generation class
+    
     super().__init__()
 
     # instantiate object managing parameters
-    # param_define() returns the parameter dictionary
-    self.param = Parameters(self.param_define())
+    self.param = p
+    self.buffer = b
+    self.generator = g
 
   def dispatch(self,op,p):
     #   op = string from client specifying operation
     #   p = dictonary from client specifying parameters
-    # returns [response,alert] to be transmitted to client
-    #   response = dictonary storing requested info
-    #   alert = string containing info not specifically requested
+    #   returns [response,alert] to be transmitted to client
+    #     response = dictonary storing requested info
+    #     alert = string containing info not specifically requested
 
     if op == 'help':
       return [self.param.parameters(),'']
@@ -44,7 +53,7 @@ class OneDimensionalSignalServer(gs.GenericServer):
       # check availability of all parameters and enforced bounds
       # avoid Python exceptions since client platform may not support this
 
-      # abort = True further actions are skipped
+      # abort = True means further actions are skipped
       self.abort = False
 
       # override default values (where client has specified them)
@@ -60,14 +69,11 @@ class OneDimensionalSignalServer(gs.GenericServer):
       field = self.param.bounds()
       if field:
         self.abort = True
-        return [{},'Error: parameter {} out of bounds'.format(field)]
-      
-      # copy parameters to variables for computational efficiency
-      # Example: p['numSamples'] is copied as self.numSamples
-      if not self.abort:
-        p = self.param.final()
-        for field in p.keys():
-          setattr(self,field,p[field])
+        return [{},'Error: parameter {} out of bounds'.format(field)] 
+
+      # initialize signal generator
+      self.generator.initialize()
+      self.buffer.initialize()
         
       return [self.param.final(),'']
 
@@ -105,102 +111,18 @@ class OneDimensionalSignalServer(gs.GenericServer):
     # responds to request for streamng of complex signal
     # manages the splitting of signal into repeated fields
 
-    # do nothing if something has gone wrong previously
+    # do nothing if something has gone awry previously
     if self.abort: return
-    
-    # Number of responses in each repeated field
-    self.nr = floor(self.num_samples/NUM_MESSAGES_PER_RESPONSE)
-    # Size of last remaining repeated field
-    self.nlo = self.num_samples % NUM_MESSAGES_PER_RESPONSE
-    size = NUM_MESSAGES_PER_RESPONSE
-    
-    for j in range(self.nr): # iterate over repeated fields
 
-      # send real and imag repeated fields
-      start = NUM_MESSAGES_PER_RESPONSE*j
-##      [real,imag] = self.generate(start,size)
-##      r = {'alert':'','real' : real,'imag' : imag}
-##      yield self.message.ComplexSample(**r)
+    while True:
       
-      sample = self.generate(start,size)
-      # convert to an array of Complex messages
-      for i in range(len(sample)):
-        r = {'real':sample[i].real,'imag':sample[i].imag}
-        sample[i] = self.message.Complex(**r)
-      r = {'alert':'','sample' : sample}
-      yield self.message.ComplexSample(**r)
+      vals = self.buffer.get(REPEATED_FIELD_COUNT)
+      if vals == []: break
       
-
-    # last remaining repeated field
-    if self.nlo == 0: # we are done
-      yield None
-    else:
-      start = NUM_MESSAGES_PER_RESPONSE*self.nr
-      size = self.nlo
-##      [real,imag] = self.generate(start,size)
-##      r = {'alert':'','real' : real,'imag' : imag}
-##      yield self.message.ComplexSample(**r)
-
-      sample = self.generate(start,size)
       # convert to an array of Complex messages
-      for i in range(len(sample)):
-        r = {'real':sample[i].real,'imag':sample[i].imag}
-        sample[i] = self.message.Complex(**r)
-      r = {'alert':'','sample' : sample}
+      for i in range(len(vals)):
+        r = {'real':vals[i].real,'imag':vals[i].imag}
+        vals[i] = self.message.Complex(**r)
+      r = {'alert':'','sample' : vals}
       yield self.message.ComplexSample(**r)
 
-class Parameters:
-  # class to store and manage parameter dictionaries
-
-  def __init__(self,p):
-    
-    # argument p = provided parameter dictionary
-    self.p = p
-    
-    # extract a smaller dictionary d with only default values
-    self.d = {}   
-    for field in self.p.keys():
-      if 'default' in self.p[field]:
-        self.d[field] = self.p[field]['default']
-
-    # store a dictonary t with default values overridden by
-    #   client-specified values
-    self.t = {}
-
-  def parameters(self):
-    return self.p
-  
-  def defaults(self):
-    return self.d
-
-  def update(self,c):
-    # c = dictionary of values that are to override the current values
-    # returns self.d overridden by c
-    self.t = self.d.copy()
-    self.t.update(c)
-    return
-
-  def complete(self):
-    # checks final parameters r to make sure there are no missing values
-    # returns either None or the name of the first encountered missing parameter
-    for field in self.t.keys():
-        if self.t[field] == None:
-          return field
-    return None
-
-  def bounds(self):
-    # checks final parameters r to make sure there are no
-    #   value below minimum or above maximum
-    # returns either None or the name of the first encountered problematic value
-    for field in self.p.keys():
-      if 'minimum' in self.p[field]:
-        if self.t[field] < self.p[field]['minimum']:
-          return field
-      if 'maximum' in self.p[field]:
-        if self.t[field] > self.p[field]['maximum']:
-          return field
-    return None
-
-  def final(self):
-    # return final set of parameters for signal generation
-    return self.t

@@ -101,14 +101,13 @@ class ListBuffer(CircularBuffer):
         and calls signal server when that number is insufficient
     '''
 
-    def __init__(self,server,bypass=False):
-        # server = signal generator which provides list of
+    def __init__(self,server):
+        # server = signal generator or stub which provides list of
         #   signal samples on request
         
         super().__init__()
 
         self.server = server
-        self._bypass = bypass
         self.initialize()
 
     def initialize(self):
@@ -181,7 +180,7 @@ class ListBuffer(CircularBuffer):
             extracted = []
             while True:
                 extracted += self.subtract(remaining)
-                remaining -= len(extracted)
+                remaining = size - len(extracted)
                 if remaining == 0:
                     return extracted[:]
 

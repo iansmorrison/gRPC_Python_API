@@ -124,5 +124,5 @@ if __name__ == '__main__':
     p = param.Parameters() # parameter dictonary
     g = CexpServer(p) # signal generator
     b = buf.ListBuffer(g)   # streaming buffer
-    s = css.StreamingSignalServer(p,b,g)  # gRPC server
+    s = css.StreamingServer(p,b,g)  # gRPC server
     s.run()

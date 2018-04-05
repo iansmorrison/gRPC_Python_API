@@ -10,12 +10,14 @@ from numpy import round
 from pprint import pprint
 
 import signal_client as csc
+import buffer as buff
 
-class ComplexExponentialClient(csc.ComplexSignalClient):
+class CexpClient(csc.StreamingClient):
     # Client which retreives a complex exonential, making use of the
     # ComplexSignalClient (which retreives a generic complex signal)
     
     def __init__(self):
+        
         super().__init__()
 
     # There are three phases: discovery, configuration, and run
@@ -51,13 +53,19 @@ class ComplexExponentialClient(csc.ComplexSignalClient):
         # get() returns a generator, so it can be interated only once
         # to access it later, have to store in a list
 
-        for samples in self.get():
-            print('\nPacket:\n',samples)
+        self.stream()
+
+        while True:
+            vals = self.buff.get(20)
+            if len(vals) == 0: break
+            print('\nOut size = ',len(vals),'\n',vals)
                   
 
 if __name__ == '__main__':
- c = ComplexExponentialClient()
- c.discovery()
- c.configuration()
- c.run()
-## c.report()
+
+    s = CexpClient()
+    b = buff.ListBuffer(s)
+    s.connect(b)
+    s.discovery()
+    s.configuration()
+    s.run()

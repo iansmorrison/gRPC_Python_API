@@ -12,20 +12,26 @@ Programmer: David G Messerschmitt
 import json
 import inspect
 from pprint import pprint
-import generic_client as gc
 
-class ComplexSignalClient(gc.GenericClientStub):
+import generic_client as gc
+import buffer as buff
+
+class StreamingClient(gc.GenericClientStub):
     '''
     Retreives a generic complex-valued signal
     Particulars of WHAT signal is returned are left to an inherited class
     '''
 
     def __init__(self):
+        
         super().__init__()
 
-        #self.samples = 205 # number of samples to generate and stream
-
     #   !!! CONFIGURATION !!!
+
+    def connect(self,b):
+        # b = buffer where client will send gRPC output and
+        #   input lists of values at the semantic layer
+        self.buff = b
 
     def metadata_message_and_response(self,op,param):
         # inherited class can call this method to send an
@@ -41,26 +47,26 @@ class ComplexSignalClient(gc.GenericClientStub):
         return [json.loads(r.response),r.alert]
 
     #   !!! RUN  !!!
- 
-    def get(self):
-        # method is invoked in order to capture a signal
-        # we assume server has already been configured
+
+    def stream(self):
+        # method is invoked in order to capture signal stream from gRPC channel
         
         s = self.message.Config(**{
                         'operation':'get',
                         'parameters':json.dumps('')
                         })
-        r = self.channel.OneDimensionalSignal(s) # r = list of signal samples
         
-        # r is a generator (to conserve memory) and thus can only be accessed once
-        # lets use that one chance to merge streamed responses into two lists stored in memory
+        self.r = self.channel.OneDimensionalSignal(s)
+        # r is a generator (to conserve memory) and thus can only be iterated once
 
-
-        for sc in r:
-            num_samples = len(sc.sample)
-            samples = [None] * num_samples # number of samples in one repeated field
-            for i in range(num_samples):
-                # convert to a complex data type and store in a list
-                samples[i] = complex(sc.sample[i].real,sc.sample[i].imag)
-            yield samples
-
+    def get(self):
+        # get next value from r, convert to complex values,
+        #   store in list, and return
+        
+        rnext = next(self.r,None)
+        if rnext == None: return []
+        size = len(rnext.sample)
+        vals = [None] * size
+        for i in range(size):
+            vals[i] = complex(rnext.sample[i].real,rnext.sample[i].imag)
+        return vals

@@ -11,7 +11,7 @@ import cmath
 from math import floor
 from pprint import pprint
 
-import buffer
+import buffer as buff
 import generic_server as gs
 
 from PROTO_DEFINITIONS import *
@@ -22,7 +22,7 @@ from PROTO_DEFINITIONS import *
 REPEATED_FIELD_COUNT = 10
 
 
-class StreamingSignalServer(gs.GenericServer):
+class StreamingServer(gs.GenericServer):
   
   def __init__(self,p,b,g):
     # p = instance of Parameters class
@@ -33,7 +33,7 @@ class StreamingSignalServer(gs.GenericServer):
 
     # instantiate object managing parameters
     self.param = p
-    self.buffer = b
+    self.buff = b
     self.generator = g
 
   def dispatch(self,op,p):
@@ -73,7 +73,7 @@ class StreamingSignalServer(gs.GenericServer):
 
       # initialize signal generator
       self.generator.initialize()
-      self.buffer.initialize()
+      self.buff.initialize()
         
       return [self.param.final(),'']
 
@@ -116,7 +116,7 @@ class StreamingSignalServer(gs.GenericServer):
 
     while True:
       
-      vals = self.buffer.get(REPEATED_FIELD_COUNT)
+      vals = self.buff.get(REPEATED_FIELD_COUNT)
       if vals == []: break
       
       # convert to an array of Complex messages

@@ -36,7 +36,9 @@ class GenericClientStub():
         # instantiate a client stub listening to this channel
         self.channel = stub(channel)
 
-        super().__init__()
-        
+    def connect(self,b):
+        # b = buffer where client will send gRPC output and
+        #   input lists of values at the time-series layer
+        self.buff = b
 
 

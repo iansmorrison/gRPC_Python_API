@@ -91,10 +91,10 @@ class CircularBuffer:
         self._oldest += add_size
 
         
-class ListBuffer(CircularBuffer):
+class TimeSeriesBuffer(CircularBuffer):
     '''
     Class manages a CircularBuffer where each location stores
-        a list of values (value type not specified)
+        a list of sample values (value type not specified)
     To prevent side effects (call by reference), the routines
         consistently work with shadow copies (vals[:] rather than vals)
     Keeps track of the total number of values stored in buffer

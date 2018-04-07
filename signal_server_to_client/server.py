@@ -10,7 +10,7 @@ import signal_server as css
 import parameters as param
 import buffer as buf
 
-class OneDimSignalServer:
+class TimeSeriesServer:
     '''
     Implements a server which provides a one-dimensional
     stream of complex-valued samples
@@ -31,11 +31,11 @@ class OneDimSignalServer:
       # add metadata relevant at this layer to that provided by
       #   and inherited class
       t['service_type'] = {
-                      'description':'',
+                      'description':'structure of the signal',
                       'default':'time_series'
                       }
       t['num_samples'] = {
-                      'description':'total duration of signal',
+                      'description':'total duration of signal in samples',
                       'default':None,
                       'minimum':1
                       }
@@ -81,12 +81,12 @@ signal frame',
         return []
       
 
-class CexpServer(OneDimSignalServer):
+class ComplexExponentialServer(TimeSeriesServer):
 
   def __init__(self,p):
+    # p = instance of Parameters storing parameter values
 
-    # define the parameters for this signal, their bounds and their defaults
-    # this is represented by a dictonary
+    # define the parameters, their bounds and their defaults
     # note: all numerical parameters must have a 'default' field
     #     (set to default=None if client is required to supply this parameter)
 
@@ -122,7 +122,7 @@ by sampling theorem, must be between -0.5 and +0.5',
 if __name__ == '__main__':
 
     p = param.Parameters() # parameter dictonary
-    g = CexpServer(p) # signal generator
-    b = buf.ListBuffer(g)   # streaming buffer
+    g = ComplexExponentialServer(p) # signal generator
+    b = buf.TimeSeriesBuffer(g)   # streaming buffer
     s = css.StreamingServer(p,b,g)  # gRPC server
     s.run()

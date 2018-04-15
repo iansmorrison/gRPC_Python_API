@@ -15,42 +15,43 @@ service ServerToClientStreaming {
 	// Back-and-forth needed to coordinate server with client
 	rpc MetaDataCoordination (Config) returns (Info);
 
-	// Signal consisting of a stream of complex-valued samples
-	//rpc OneDimensionalSignal (Config) returns (stream ComplexSample);
-	rpc ComplexTimeSeries (Config) returns (stream ComplexSample);
+	// Signal consisting of a stream of real-valued samples
+	rpc RealTimeSeries (Config) returns (stream RealSample);
 
+	// Signal consisting of a stream of complex-valued samples
+	rpc ComplexTimeSeries (Config) returns (stream ComplexSample);
 }
 
 
 message Config {
 
-	// All fields carry a JSON reprsentation of a map (key-value pairs)
-	// 	(in Python, this is converted from a dictonary)
-
 	// What info should the server provide or what should the server do?
+	// Usually this is a simple string like 'set' or 'get'
 	string operation = 1;
 
 	// Here are the numerical values of parameters
+	// Usually this is a JSON representation of a map (key-value pairs)
 	string parameters = 2;
 	}
 
 message Info {
 
-	// All fields carry a JSON reprsentation of a map (key-value pairs)
-	// 	(in Python this is converted from a dictonary)
-
 	// Here is the information requested by the client
+	// Usually this is a JSON representation of a map (key-value pairs)
 	string response = 1;
 
 	// What issues or information not specifically requested 
 	//	should the client be aware of?
+	// Usually this is a simple string message, set to emply if no alert
 	string alert = 2;
 	}
 
-message ComplexSample {
+message RealSample {
 
-	// // What issues or information not specifically requested 
-	//	should the client be aware of?
+		repeated float sample = 1;
+	}
+
+message ComplexSample {
 	
 	repeated Complex sample = 1;
 	}

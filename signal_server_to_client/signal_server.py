@@ -106,8 +106,26 @@ class StreamingServer(gs.GenericServer):
       'alert':alert
       }
     return self.message.Info(**r)
-  
-##  def OneDimensionalSignal(self,request,context):
+
+  def RealTimeSeries(self,request,context):
+
+    # responds to request for streamng of real values
+    # manages the splitting of signal into repeated fields
+
+    # do nothing if something has gone awry previously
+    if self.abort: return
+
+    while True:
+      
+      # get a list of floating values to pass to gRPC
+      vals = self.buff.get(REPEATED_FIELD_COUNT)
+      if vals == []: break  # no more values to transmit
+      
+      # convert to an list of messages
+      #   which will be transmitted as a repeated field
+      r = {'sample' : vals}
+      yield self.message.RealSample(**r)
+      
   def ComplexTimeSeries(self,request,context):
 
     # responds to request for streamng of complex signal
@@ -125,7 +143,6 @@ class StreamingServer(gs.GenericServer):
       for i in range(len(vals)):
         r = {'real':vals[i].real,'imag':vals[i].imag}
         vals[i] = self.message.Complex(**r)
-##      r = {'alert':'','sample' : vals}
       r = {'sample' : vals}
       yield self.message.ComplexSample(**r)
 

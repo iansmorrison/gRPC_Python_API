@@ -28,17 +28,13 @@ class GenericClientStub():
         self.serve = importlib.import_module('{0}_pb2_grpc'.format(PROTO_FILE))
                                                  
         # a stub which allows client to interact with gRPC
-        stub = getattr(self.serve,'{0}Stub'.format(SERVICE))
+        s = getattr(self.serve,'{0}Stub'.format(SERVICE))
 
         # establish a port where rpc requests can be received
-        channel = grpc.insecure_channel(NET_CONNECTION)
+        c = grpc.insecure_channel(NET_CONNECTION)
 
         # instantiate a client stub listening to this channel
-        self.channel = stub(channel)
+        self.channel = s(c)
 
-    def connect(self,b):
-        # b = buffer where client will send gRPC output and
-        #   input lists of values at the time-series layer
-        self.buff = b
 
 

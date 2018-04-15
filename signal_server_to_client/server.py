@@ -5,6 +5,7 @@ Progammer David G Messerschmitt
 4 April 2018
 """
 import cmath
+import numpy as np
 
 import signal_server as css
 import parameters as param
@@ -112,12 +113,23 @@ by sampling theorem, must be between -0.5 and +0.5',
 
   def generate(self,start,duration):
     
-    # generate a list of samples indexed by start<=k<(start+duration-1)
-    vals = [None] * duration
-    for i in range(duration):
-        phase = self.phase_initial + (start+i)*self.phase_increment
-        vals[i] = cmath.exp(2.*cmath.pi*phase*1j)
-    return vals
+##    # generate a list of samples indexed by start<=k<(start+duration-1)
+##    vals = [None] * duration
+##    for i in range(duration):
+##        phase = self.phase_initial + (start+i)*self.phase_increment
+##        vals[i] = cmath.exp(2.*cmath.pi*phase*1j)
+##    return vals
+
+    # generate a numpy array of samples indexed by start<=k<(start+duration-1)
+    print(start,duration)
+    t = np.arange(start,start+duration,1)
+    print(t)
+    arg = 1j * 2 * np.pi * self.phase_increment * t
+    print(arg)
+    vals = np.exp(arg)
+    print(vals)
+    return list(vals)
+    
 
 if __name__ == '__main__':
 

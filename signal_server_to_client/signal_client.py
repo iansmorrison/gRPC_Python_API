@@ -12,6 +12,7 @@ Programmer: David G Messerschmitt
 import json
 import inspect
 from pprint import pprint
+import matplotlib.pyplot as plt
 
 import parameters as param
 import generic_client as gc
@@ -66,17 +67,25 @@ class TimeSeriesClient(gc.GenericClientStub):
                 pprint(p)
 
 		# change defaults as desired
-		# parameters relevant at this time-series layer
+		# only parameters relevant at this time-series layer
                 self.t['service_type'] = 'time_series'
                 self.t['num_samples'] = 55
 
 		# configure the server parameters
                 print('\nChosen parameters sent to server:\n')
                 pprint(self.t)
+                self.param_dict_to_var()
                 [p,a] = self.metadata_message_and_response('set',self.t)
                 if a != '':
                         print('\nAlert from server: ',a)
 
+        def param_dict_to_var(self):
+
+                # store final set of parameters as variables for efficiency
+                # for example, parameter 'frame' becomes self.numSamples
+                for field in self.t.keys():
+                        setattr(self,field,self.t[field])
+                
 	#   *****************  runtime streaming ******************
 
         def stream(self):
@@ -89,7 +98,9 @@ class TimeSeriesClient(gc.GenericClientStub):
 						})
 
 		# capture resulting time series
-                self.r = self.channel.OneDimensionalSignal(s)
+##                self.r = self.channel.OneDimensionalSignal(s)
+                self.r = self.channel.ComplexTimeSeries(s)
+
 		# r is a generator (to conserve memory) and thus
 		#   can only be iterated once by repeated calls to
 		#   the get() method
@@ -111,14 +122,31 @@ class TimeSeriesClient(gc.GenericClientStub):
                 for i in range(size):
                         vals[i] = complex(rnext.sample[i].real,rnext.sample[i].imag)
                 return vals
-
+                
         def run(self):
                 # run the client to return complex exponential with parameters()
                 # buff.get() provides a streamed complex time series
 
-                self.stream()
+                self.stream()   # access time-series from gRPC channel
 
                 while True:
-                        vals = self.buff.get(20)
+                        vals = self.buff.get(self.frame)
                         if len(vals) == 0: break
-                        print('\nOut size = ',len(vals),'\n',vals) 
+                        self.display_frame(vals[:]) 
+
+        def display_frame(self,vals):
+
+                # print 
+                # round for purposes of display
+                for i in range(len(vals)):
+                        vals[i] = complex(
+                                round(vals[i].real,2),
+                                round(vals[i].imag,2)
+                                )
+                print('\nOne frame of size = ',len(vals),'\n',vals)
+
+##                # plot
+##                plt.plot(t,s.real,t,s.imag)
+##                plt.axis([0,numSamples*T,-1,+1])
+##                plt.title('Magnitude of exp(x)')
+##                plt.show()

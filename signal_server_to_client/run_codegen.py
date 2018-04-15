@@ -25,4 +25,4 @@ outcome = protoc.main(
 if outcome == 0:
     print('No errors in compilation')
 else:
-    print('Error occurred in compilation: Error ',outcome)
+    print('Error occurred in compilation: Return ',outcome)

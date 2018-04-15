@@ -6,7 +6,6 @@ This version uses a both a repeated field (for efficiency)
 Programmer: David G Messerschmitt
 18 March 2018
 """
-#from numpy import round
 from pprint import pprint
 
 import parameters as param

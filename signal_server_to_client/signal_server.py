@@ -107,7 +107,9 @@ class StreamingServer(gs.GenericServer):
       }
     return self.message.Info(**r)
   
-  def OneDimensionalSignal(self,request,context):
+##  def OneDimensionalSignal(self,request,context):
+  def ComplexTimeSeries(self,request,context):
+
     # responds to request for streamng of complex signal
     # manages the splitting of signal into repeated fields
 
@@ -123,6 +125,7 @@ class StreamingServer(gs.GenericServer):
       for i in range(len(vals)):
         r = {'real':vals[i].real,'imag':vals[i].imag}
         vals[i] = self.message.Complex(**r)
-      r = {'alert':'','sample' : vals}
+##      r = {'alert':'','sample' : vals}
+      r = {'sample' : vals}
       yield self.message.ComplexSample(**r)
 

@@ -5,17 +5,19 @@ We group samples or arrays together in a repeated field for efficiency
 
 Programmer: David G Messerschmitt
 16 March 2018
+Most recent modification: 14 April 2018
 */
 
 syntax = "proto3";
 
-service SignalServerToClient {
+service ServerToClientStreaming {
 
 	// Back-and-forth needed to coordinate server with client
 	rpc MetaDataCoordination (Config) returns (Info);
 
 	// Signal consisting of a stream of complex-valued samples
-	rpc OneDimensionalSignal (Config) returns (stream ComplexSample);
+	//rpc OneDimensionalSignal (Config) returns (stream ComplexSample);
+	rpc ComplexTimeSeries (Config) returns (stream ComplexSample);
 
 }
 
@@ -51,9 +53,6 @@ message ComplexSample {
 	//	should the client be aware of?
 	
 	repeated Complex sample = 1;
-
-	// What issues should client be aware of?
-	string alert = 2;
 	}
 
 message Complex {

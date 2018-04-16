@@ -24,58 +24,13 @@ REPEATED_FIELD_COUNT = 10
 
 class StreamingServer(gs.GenericServer):
   
-  def __init__(self,p,b,g):
-    # p = instance of Parameters class
-    # b = instance of ListBuffer class
-    # g = instance of signal generation class
+  def __init__(self):
     
     super().__init__()
 
-    # instantiate object managing parameters
-    self.param = p
-    self.buff = b
-    self.generator = g
-
-  def dispatch(self,op,p):
-    #   op = string from client specifying operation
-    #   p = dictonary from client specifying parameters
-    #   returns [response,alert] to be transmitted to client
-    #     response = dictonary storing requested info
-    #     alert = string containing info not specifically requested
-
-    if op == 'help':
-      return [self.param.parameters(),'']
-
-    elif op == 'default':
-      return [self.param.defaults(),'']
-
-    elif op == 'set':
-      # check availability of all parameters and enforced bounds
-      # avoid Python exceptions since client platform may not support this
-
-      # abort = True means further actions are skipped
-      self.abort = False
-
-      # override default values (where client has specified them)
-      self.param.update(p)
-
-      # make sure all parameters have been specified
-      field = self.param.complete()
-      if field:
-        self.abort = True
-        return [{},"Error: parameter '{0}' must be specified".format(field)]
-
-      # confirm that all parameters fall within bounds
-      field = self.param.bounds()
-      if field:
-        self.abort = True
-        return [{},'Error: parameter {} out of bounds'.format(field)] 
-
-      # initialize signal generator
-      self.generator.initialize()
-      self.buff.initialize()
-        
-      return [self.param.final(),'']
+    # a buffer to store signal values as they are generated
+    self.buff = buff.TimeSeriesBuffer(self)
+##    self.generator = g
 
   # a method must be provided for each rpc channel that processes
   #   request and sends response as defined in .proto file

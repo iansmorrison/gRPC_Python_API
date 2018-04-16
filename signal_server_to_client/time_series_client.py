@@ -17,6 +17,7 @@ from pprint import pprint
 import parameters as param
 import generic_client as gc
 import buffer as buff
+import time_series_receptors as cr
 
 class TimeSeriesClient(gc.GenericClientStub):
         '''
@@ -34,14 +35,13 @@ class TimeSeriesClient(gc.GenericClientStub):
             this implementation is retained for possible future use
         '''
 
-        def __init__(self,p,t):
-                # p = instance of Parameters storing parameter values
-                # t = parameter values set by inherited class
+        def __init__(self):
+ 
+                # object to store and manipulate parameters
+                self.param = param.Parameters()
 
-                self.t = t
-
-                # instantiate a buffer, which is used
-                #   for conversion of repeated fields to time-series frames
+                # instantiate a buffer and point it to self
+                # used for conversion of repeated fields to time-series frames
                 self.buff = buff.TimeSeriesBuffer(self)
 
                 super().__init__()
@@ -64,33 +64,45 @@ class TimeSeriesClient(gc.GenericClientStub):
 		# JSON response message converted to dictonary 
                 return [json.loads(r.response), r.alert]
 
-        def discovery(self):
-                # get information about server
+        def discover_and_choose(self):
+                # get information about services available, and choose one
 
-                [r,a] = self.metadata_message_and_response('help', {})
-                print('\nParameters supported by server:\n')
+                # what are the service types available from this server?
+                [r,a] = self.metadata_message_and_response('service_types?', {})
+                print('\nList of service types available:\n',r['service_type'])
+
+                # choose a service and find out its parameterization
+                print('\nService type chosen: ',"'cexp'")
+                p = {'service_choice' : 'cexp'}
+                [r,a] = self.metadata_message_and_response('service_choice', p)
+                print('\nParameters supported by this service type:\n')
                 pprint(r)
+
+                # instantiate a client for this service type
+                self.rec = cr.ComplexExponentialClient()
+
+                # store parameters for future use and manipulation
+                self.param.set(r)
 
         def configuration(self):
                 # sets server configuration parameters
 
-		# from server, get list of parameter default values
-                [p,a] = self.metadata_message_and_response('default', {})
+                p = self.param.defaults()
                 print('\nDefault values of parameters:\n')
                 pprint(p)
 
-		# change defaults as desired
-		# only parameters relevant at this time-series layer
-                self.t['service_type'] = 'time_series'
-                self.t['num_samples'] = 55
-
+		# ask the service layer for parameter values
+                p = self.rec.parameters(p)
+                self.param.update(p)
+                
 		# configure the server parameters
                 print('\nChosen parameters sent to server:\n')
-                pprint(self.t)
-                self.param_dict_to_var() # store parameter values as variables
+                pprint(self.param.final())
+                # store parameter values in variables
+                self.param_dict_to_var()
 
-                # inform server of what parameter values have been chosen
-                [p,a] = self.metadata_message_and_response('set', self.t)
+                # inform server
+                [p,a] = self.metadata_message_and_response('set', self.param.final())
                 if a != '':
                         print('\nAlert from server: ', a)
 
@@ -112,44 +124,36 @@ class TimeSeriesClient(gc.GenericClientStub):
 		#   can only be iterated once by repeated calls to
 		#   the get() method
 
-        def frames(self):
-                # run the client to return complex exponential with parameters()
-                # buff.get() provides a streamed complex time series with
-                #   desired self.frame length
-
-                self.stream()   # access time-series from gRPC channel
-
-                # we retrive time-series frames from buffer
+                # retrive time-series frames from buffer
                 # buffer in turn will repeatedly call self.get() to
                 #   retreive streamed values from gRPC
                 while True:
+                    
                         vals_list = self.buff.get(self.frame)
-                        
-                        if len(vals_list) == 0: # end of generated time-series
-                            self.receive(np.array([]))
-                            break
-
                         # convert to a numpy array object
                         vals_array = np.array(vals_list)
                         
-                        # push each list of values to the application layer
+                        # push each array to the application layer
                         #   which receive()'s them
-                        self.receive(vals_array)
+                        self.rec.receive(vals_array)
+
+                        if vals_array.size == 0: break
 
         def run(self):
                 # orchestrate stages of operation
                 
-                self.discovery()
+                self.discover_and_choose()
                 self.configuration()
-                self.frames()
+                self.stream()
                         
         def param_dict_to_var(self):
 
                 # store final set of parameters as variables for efficiency
                 # for example, value of a parameter named 'frame' becomes
                 #   variable self.frame
-                for field in self.t.keys():
-                        setattr(self,field,self.t[field])
+                p = self.param.final()
+                for field in p.keys():
+                        setattr(self,field,p[field])
                 
 
 class ComplexTimeSeriesClient(TimeSeriesClient):
@@ -159,13 +163,9 @@ class ComplexTimeSeriesClient(TimeSeriesClient):
                 are left to an inherited class
         '''
 
-        def __init__(self,p,t):
-                # p = instance of Parameters storing parameter values
-                # t = parameter values are set by inherited class
+        def __init__(self):
 
-                self.t = t
-
-                super().__init__(p,t)
+                super().__init__()
 
 
         def get(self):
@@ -189,3 +189,7 @@ class ComplexTimeSeriesClient(TimeSeriesClient):
                 return vals
                
 
+if __name__ == '__main__':
+
+    s = ComplexTimeSeriesClient()
+    s.run()

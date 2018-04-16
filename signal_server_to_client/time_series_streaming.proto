@@ -10,7 +10,7 @@ Most recent modification: 14 April 2018
 
 syntax = "proto3";
 
-service ServerToClientStreaming {
+service TimeSeriesStreaming {
 
 	// Back-and-forth needed to coordinate server with client
 	rpc MetaDataCoordination (Config) returns (Info);

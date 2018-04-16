@@ -5,10 +5,9 @@ This allows us to replace .proto-specific names with generic ones
     and remove these names from the program files
 '''
 
-PROTO_FILE = 'signal_server_to_client'
+PROTO_FILE = 'time_series_streaming'
 
-##SERVICE = 'SignalServerToClient'
-SERVICE = 'ServerToClientStreaming'
+SERVICE = 'TimeSeriesStreaming'
 
 #Coordinate client and server ports
 NET_CONNECTION = 'localhost:50057'

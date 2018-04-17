@@ -9,7 +9,7 @@ from pprint import pprint
 
 import parameters as param
 import message_server as ms
-import time_series_generators as sgs
+import time_series_generators as tsg
 
 class TimeSeriesServer(ms.StreamingServer):
     '''
@@ -26,10 +26,8 @@ class TimeSeriesServer(ms.StreamingServer):
 
     def __init__(self):
 
-        # services available
-        self.services = {'service_type' : [
-                                    'cexp'
-                                        ]}
+        # support discovery of different time-series generator types
+        self.generators = tsg.Chooser()
         
         # store and manipulate parameter metadata
         self.param = param.Parameters()
@@ -45,23 +43,32 @@ class TimeSeriesServer(ms.StreamingServer):
         #     alert = string containing info not specifically requested
 
         if op == 'service_types?':
-            return [self.services,'']
+            r = {'service_type': self.generators.alternatives()}
+            return [r, '']
 
+        if op == 'describe':
+            c = p['service_type']
+            print('\nClient is asking about service ', c)
+
+            g = self.generators.choice(c)
+            r = {c : g.parameters()['description']}
+            return [r, '']
+            
         if op == 'service_choice':
 
-            choice = p['service_choice']
-            print('\nClient has chosen service:', choice)
-            
-            if choice == 'cexp':
-                self.gen = sgs.ComplexExponentialServer()
-                # get parameters for this service
-                t = self.gen.parameters()
-                # store for future use and manipulation
-                self.param.set(t)
-                return [t,'']
+            c = p['service_choice']
+            print('\nClient has chosen service ', c)
 
-            else:
-                return [{},'Service choice not available']
+            self.gen = self.generators.choice(c)
+            if self.gen == None:
+                return [{},'Service choice {} not available'.format(c)]
+
+            # get parameters for this service
+            t = self.gen.parameters()
+            # store for future use and manipulation
+            self.param.set(t)
+            # send parameters to client in answer message
+            return [t,'']
 
         elif op == 'set':
 

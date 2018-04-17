@@ -1,12 +1,44 @@
 """
-The Python implementation of a server that returns a
-  complex exponential complex-valued signal
+The Python implementation of time-series generators
+All specifications for new signal content are contained in this file,
+    so a new time-series type can be added here
 Progammer David G Messerschmitt
-4 April 2018
+16 April 2018
 """
+
+# make use of NumPy to simplify array processing
 import numpy as np
 
-class ComplexExponentialServer():
+# adding a new signal generator involves two steps:
+#   add name to Chooser()
+#   add class to generate that signal
+
+class Chooser():
+    # this class allows the server to dynamically choose a
+    #   time-series generator
+
+    def __init__(self):
+
+        # *** INCLUDE A LINE HERE FOR EACH TIME-SERIES GENERATOR TYPE ***
+        self.generators = {}
+        self.generators['cexp'] = ComplexExponentialGenerator()
+
+    def alternatives(self):
+
+        return list(self.generators.keys())
+
+    def choice(self, name):
+        # name = name of signal generator
+        # returns signal generator object or None
+
+        if name in self.generators:
+            return self.generators[name]
+        else:
+            print('\nTime-series generator name {} unknown'.format(name))
+            return None
+
+
+class ComplexExponentialGenerator():
 
     def __init__(self): pass
 
@@ -15,7 +47,7 @@ class ComplexExponentialServer():
         #   and defaults (subject to change)
         # a default = None indicates that the client must specify a value
 
-        t = {'generator':'cexp'}
+        t = {'service_type':'cexp'}
         t['description'] = 'generator returns samples of a complex exponential \
 exp(j * 2*pi * phase(t) * t) where t = time'
         t['num_samples'] = {
@@ -25,7 +57,7 @@ exp(j * 2*pi * phase(t) * t) where t = time'
                           }
         t['frame'] = {
                         'description':'number of time-samples in each generated \
-signal frame',
+time-series frame',
                         'default':10,
                         'minimum':1
                         }
@@ -37,8 +69,8 @@ as fraction of 2*pi, in the range +-0.5',
                           'maximum':+0.5
                           }
         t['phase_increment'] = {
-                        'description':'phase advance per sample as fraction of 2*pi; \
-by sampling theorem, must be in the range +-0.5',
+                        'description':'phase advance per time-sample as fraction \
+of 2*pi;  by sampling theorem, must be in the range +-0.5',
                         'default':None,
                         'minimum':-0.5,
                         'maximum':+0.5

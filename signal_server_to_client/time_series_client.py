@@ -1,16 +1,16 @@
 """
-The Python implementation of the ComplexSignalClient
+The Python implementation of a time-series streaming clinet
 This version uses a both a repeated field (for efficiency)
   and streaming (for long-duration signals) to return multiple complex samples
+It includes support for both real- and complex-valued samples
 
 Programmer: David G Messerschmitt
-18 March 2018
+14 April 2018
 """
 
 # !!! IF .PROTO FILE IS CHANGED, THIS FILE MUST BE EDITED TO ALIGN NAMES !!!
 
 import json
-import inspect
 import numpy as np
 from pprint import pprint
 
@@ -70,6 +70,15 @@ class TimeSeriesClient(gc.GenericClientStub):
                 # what are the service types available from this server?
                 [r,a] = self.metadata_message_and_response('service_types?', {})
                 print('\nList of service types available:\n',r['service_type'])
+
+                # ask for description of a specific server type
+                c = 'cexp'
+                [r,a] = self.metadata_message_and_response(
+                                                    'describe',
+                                                    {'service_type' : c}
+                                                        )
+                print('\nDescription of service type {}:'.format(c))
+                print(r[c])
 
                 # choose a service and find out its parameterization
                 print('\nService type chosen: ',"'cexp'")

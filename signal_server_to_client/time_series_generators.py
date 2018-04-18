@@ -9,36 +9,47 @@ Progammer David G Messerschmitt
 # make use of NumPy to simplify array processing
 import numpy as np
 
-# adding a new signal generator involves two steps:
-#   add name to Chooser()
-#   add class to generate that signal
+# to add a new signal generator, simple add a new class
+#   implementing that signal generato
 
-class Chooser():
-    # this class allows the server to dynamically choose a
-    #   time-series generator
 
-    def __init__(self):
+class ComplexExponentialGenerator1():
+    '''
+    Time-series generator for a complex-exponential that employs
+    real-valued streaming over the RPC layer, and conveys time-values
+    as well as real- and imag-values.
+    '''
+    # the preceding doc string is the documentation for this generator
+    #   that is displayed to the user
+    
+    # two required class variables are __handle__ and __transport__
+    
+    # __handle__ = a 'popular' name for the generator which is
+    #   friendly and descriptive t the user
+    __handle__ = 'cexp1'
 
-        # *** INCLUDE A LINE HERE FOR EACH TIME-SERIES GENERATOR TYPE ***
-        self.generators = {}
-        self.generators['cexp'] = ComplexExponentialGenerator()
+    # __transport__ specifies the gRPC service invoked by this generator
+    __transport__ = 'real-valued_streaming'
 
-    def alternatives(self):
-
-        return list(self.generators.keys())
-
-    def choice(self, name):
-        # name = name of signal generator
-        # returns signal generator object or None
-
-        if name in self.generators:
-            return self.generators[name]
-        else:
-            print('\nTime-series generator name {} unknown'.format(name))
-            return None
+    def __init__(self): pass
 
 
 class ComplexExponentialGenerator():
+    '''
+    Time-series generator for a complex-exponential that uses the
+    complex-valued streaming over the RPC layer.
+    '''
+    # the preceding doc string is the documentation for this generator
+    #   that is displayed to the user
+    
+    # two required class variables are __handle__ and __transport__
+    
+    # __handle__ = a 'popular' name for the generator which is
+    #   friendly and descriptive t the user
+    __handle__ = 'cexp'
+
+    # __transport__ specifies the gRPC service invoked by this generator
+    __transport__ = 'real-valued_streaming'
 
     def __init__(self): pass
 
@@ -106,4 +117,4 @@ of 2*pi;  by sampling theorem, must be in the range +-0.5',
             return list(vals)
 
         else: return []
-    
+

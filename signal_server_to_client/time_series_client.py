@@ -67,24 +67,18 @@ class TimeSeriesClient(gc.GenericClientStub):
         def discover_and_choose(self):
                 # get information about services available, and choose one
 
-                # what are the service types available from this server?
+                # what are the time-series generators available from this server?
                 [r,a] = self.metadata_message_and_response('service_types?', {})
-                print('\nList of service types available:\n',r['service_type'])
-
-                # ask for description of a specific server type
-                c = 'cexp'
-                [r,a] = self.metadata_message_and_response(
-                                                    'describe',
-                                                    {'service_type' : c}
-                                                        )
-                print('\nDescription of service type {}:'.format(c))
-                print(r[c])
+                print('\nList of time-series generators available:')
+                for name in r['service_type'].keys():
+                    print('\nService {}:'.format(name))
+                    print(r['service_type'][name])
 
                 # choose a service and find out its parameterization
-                print('\nService type chosen: ',"'cexp'")
+                print('\nTime-series generator chosen: ',"'cexp'")
                 p = {'service_choice' : 'cexp'}
                 [r,a] = self.metadata_message_and_response('service_choice', p)
-                print('\nParameters supported by this service type:\n')
+                print('\nParameters supported by this generator:\n')
                 pprint(r)
 
                 # instantiate a client for this service type

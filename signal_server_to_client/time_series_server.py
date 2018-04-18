@@ -4,6 +4,8 @@ The Python implementation of a server that returns a
 Progammer David G Messerschmitt
 4 April 2018
 """
+
+import inspect
 import numpy as np
 from pprint import pprint
 
@@ -26,14 +28,36 @@ class TimeSeriesServer(ms.StreamingServer):
 
     def __init__(self):
 
-        # support discovery of different time-series generator types
-        self.generators = tsg.Chooser()
-        
-        # store and manipulate parameter metadata
+        # create a dictionary of all available generators
+        #   which are assumed to be classes in module tsg
+        self.generators = {}
+        for name, obj in inspect.getmembers(tsg,inspect.isclass):
+            self.generators[name] = obj
+
+        self.generators_desc = {}
+        for name in self.generators.keys():
+            # __handle__ is the 'popular' name for a time-series
+            #       generator, suitable for presenting to user
+            # __handle__ must be specified by the generator class
+            #       as a class variable
+            handle = self.generators[name].__handle__
+            docstring = inspect.getdoc(self.generators[name])
+            self.generators_desc[handle] = docstring
+                   
+        # object to store and manipulate parameter metadata
         self.param = param.Parameters()
 	 
         super().__init__()
 
+    def handle_to_gen(self,handle):
+        print('\nCalling handle_to_print')
+        # look up the class associated with a given handle
+        # returns an instance of that class
+        for name in self.generators.keys():
+            if self.generators[name].__handle__ == handle:
+                print(handle,self.generators[name])
+                return self.generators[name]()
+    
     def dispatch(self,op,p):
         # implement operation requested by client
         #   op = string from client specifying operation
@@ -43,30 +67,25 @@ class TimeSeriesServer(ms.StreamingServer):
         #     alert = string containing info not specifically requested
 
         if op == 'service_types?':
-            r = {'service_type': self.generators.alternatives()}
-            return [r, '']
 
-        if op == 'describe':
-            c = p['service_type']
-            print('\nClient is asking about service ', c)
-
-            g = self.generators.choice(c)
-            r = {c : g.parameters()['description']}
+            r = { 'service_type' : self.generators_desc }
             return [r, '']
             
         if op == 'service_choice':
 
-            c = p['service_choice']
-            print('\nClient has chosen service ', c)
+            c = p['service_choice']           
+            if c not in self.generators_desc.keys():
+                return [{},'Time-series generator {} not available'.format(c)]
+            print('\nClient has chosen time-series generator ', c)
 
-            self.gen = self.generators.choice(c)
-            if self.gen == None:
-                return [{},'Service choice {} not available'.format(c)]
-
+            self.gen = self.handle_to_gen(c)
+            print('\nGenerator object: ',self.gen)
+            
             # get parameters for this service
+            #     and store for future use and manipulation
             t = self.gen.parameters()
-            # store for future use and manipulation
             self.param.set(t)
+            
             # send parameters to client in answer message
             return [t,'']
 

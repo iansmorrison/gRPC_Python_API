@@ -12,6 +12,7 @@ Programmer: David G Messerschmitt
 
 import json
 import numpy as np
+import inspect
 from pprint import pprint
 
 import parameters as param
@@ -21,7 +22,7 @@ import time_series_receptors as cr
 
 class TimeSeriesClient(gc.GenericClientStub):
         '''
-        Retreives a generic time series
+        Retreives a generic time-series from a client stub
         This class handles discovery and configuration, but
                 not run-time
         Different inherited class can handle different
@@ -36,7 +37,13 @@ class TimeSeriesClient(gc.GenericClientStub):
         '''
 
         def __init__(self):
- 
+
+                # create a dictionary of all available time-series receptors
+                #   which are assumed to be implemented as classes in module cr
+                self.receptors = {}
+                for name, obj in inspect.getmembers(cr,inspect.isclass):
+                    self.receptors[name] = obj
+            
                 # object to store and manipulate parameters
                 self.param = param.Parameters()
 
@@ -44,8 +51,18 @@ class TimeSeriesClient(gc.GenericClientStub):
                 # used for conversion of repeated fields to time-series frames
                 self.buff = buff.TimeSeriesBuffer(self)
 
+                self.abort = False # a fatal error has occured?
+
                 super().__init__()
-	
+                
+        def handle_to_rec(self,handle):
+            # look up the receptor class associated with a given handle
+            # returns an instance of that class
+
+            for name in self.receptors.keys():
+                if self.receptors[name].__handle__ == handle:
+                    return self.receptors[name]()
+            
 	#   ********** metadata and configuration *************
 
         def metadata_message_and_response(self,op,p):
@@ -67,22 +84,33 @@ class TimeSeriesClient(gc.GenericClientStub):
         def discover_and_choose(self):
                 # get information about services available, and choose one
 
+                self.abort = False
+
                 # what are the time-series generators available from this server?
                 [r,a] = self.metadata_message_and_response('service_types?', {})
+
                 print('\nList of time-series generators available:')
                 for name in r['service_type'].keys():
-                    print('\nService {}:'.format(name))
+                    print('\nService: {}:'.format(name))
                     print(r['service_type'][name])
 
                 # choose a service and find out its parameterization
-                print('\nTime-series generator chosen: ',"'cexp'")
-                p = {'service_choice' : 'cexp'}
+                #   (in the future this will probably be obtained from user)
+                choice = 'complex_exponential_with_complex_transport'
+                
+                if choice not in r['service_type'].keys():
+                    self.abort = True
+                    print('\nChosen service type not available')
+                    return
+                
+                print('\nTime-series generator chosen: ', choice)
+                p = {'service_choice' : choice}
                 [r,a] = self.metadata_message_and_response('service_choice', p)
                 print('\nParameters supported by this generator:\n')
                 pprint(r)
 
                 # instantiate a client for this service type
-                self.rec = cr.ComplexExponentialClient()
+                self.rec = self.handle_to_rec(choice)
 
                 # store parameters for future use and manipulation
                 self.param.set(r)
@@ -104,10 +132,13 @@ class TimeSeriesClient(gc.GenericClientStub):
                 # store parameter values in variables
                 self.param_dict_to_var()
 
-                # inform server
+                # inform server of parameters chosen
+                # server returns configuration information for the gRPC transport
                 [p,a] = self.metadata_message_and_response('set', self.param.final())
                 if a != '':
                         print('\nAlert from server: ', a)
+                self.transport = p['transport']
+                print('\nTransport request: ',self.transport)
 
 	#   ********** runtime operations *************
 
@@ -120,8 +151,15 @@ class TimeSeriesClient(gc.GenericClientStub):
 						'parameters':json.dumps('')
 						})
 
-		# capture resulting time series
-                self.r = self.channel.ComplexTimeSeries(s)
+                # capture resulting time series
+                if self.transport == 'real_valued_streaming':
+                    self.r = self.channel.RealTimeSeries(s)
+                elif self.transport == 'complex_valued_streaming':
+                    self.r = self.channel.ComplexTimeSeries(s)
+                else:
+                    print(
+            '\nUnknown gRPC service {} requested'.format(self.transport)
+                        )
 
 		# r is a generator (to conserve memory) and thus
 		#   can only be iterated once by repeated calls to
@@ -145,9 +183,9 @@ class TimeSeriesClient(gc.GenericClientStub):
         def run(self):
                 # orchestrate stages of operation
                 
-                self.discover_and_choose()
-                self.configuration()
-                self.stream()
+                if not self.abort: self.discover_and_choose()
+                if not self.abort: self.configuration()
+                if not self.abort: self.stream()
                         
         def param_dict_to_var(self):
 

@@ -29,11 +29,12 @@ class TimeSeriesServer(ms.StreamingServer):
     def __init__(self):
 
         # create a dictionary of all available generators
-        #   which are assumed to be classes in module tsg
+        #   which are assumed to be implemented as classes in module tsg
         self.generators = {}
         for name, obj in inspect.getmembers(tsg,inspect.isclass):
             self.generators[name] = obj
 
+        # create a dictonary with documentation for each generator
         self.generators_desc = {}
         for name in self.generators.keys():
             # __handle__ is the 'popular' name for a time-series
@@ -44,18 +45,17 @@ class TimeSeriesServer(ms.StreamingServer):
             docstring = inspect.getdoc(self.generators[name])
             self.generators_desc[handle] = docstring
                    
-        # object to store and manipulate parameter metadata
+        # a place to store and manipulate parameter metadata
         self.param = param.Parameters()
 	 
         super().__init__()
 
     def handle_to_gen(self,handle):
-        print('\nCalling handle_to_print')
-        # look up the class associated with a given handle
+        # look up the generator class associated with a given handle
         # returns an instance of that class
+        
         for name in self.generators.keys():
             if self.generators[name].__handle__ == handle:
-                print(handle,self.generators[name])
                 return self.generators[name]()
     
     def dispatch(self,op,p):
@@ -78,18 +78,20 @@ class TimeSeriesServer(ms.StreamingServer):
                 return [{},'Time-series generator {} not available'.format(c)]
             print('\nClient has chosen time-series generator ', c)
 
+            # instantiate the chosen signal generator class
             self.gen = self.handle_to_gen(c)
-            print('\nGenerator object: ',self.gen)
             
-            # get parameters for this service
+            # get parameter dictionary for this service
             #     and store for future use and manipulation
             t = self.gen.parameters()
             self.param.set(t)
             
-            # send parameters to client in answer message
+            # send parameter dictionary to client in answer message
             return [t,'']
 
         elif op == 'set':
+            # configuration of server and client for this service
+            #   with parameters provided by client
 
             print('\nParameter values chosen by client:')
             pprint(p)
@@ -99,7 +101,7 @@ class TimeSeriesServer(ms.StreamingServer):
             
             # check availability of all parameters and enforced bounds
 
-            # abort = True means further actions are skipped
+            # abort = True => further actions are skipped
             self.abort = False
 
             # make sure all parameters have been specified
@@ -116,11 +118,18 @@ class TimeSeriesServer(ms.StreamingServer):
                 print('\nAborting because a parameter is out of bounds')
                 return [{},'Error: parameter {} out of bounds'.format(field)] 
 
-            # initialize signal generator and buffer for a new run
-            self.initialize_generator()
+##            # configure protocol buffer service for this time-series generator
+##            t = self.gen.__transport__
+            
+            # initialize signal generator and time-series buffer for a new run
+            self.gen.initialize(self.param.final())
+            print('\nNew time-series generator run')
             self.buff.initialize()
 
-            return [{},'']
+            # return configuration information for the client service
+            t = self.gen.__transport__
+            r = {'transport' : t }
+            return [r,'']
 
         
     def initialize_generator(self):
@@ -133,12 +142,21 @@ class TimeSeriesServer(ms.StreamingServer):
     def get(self):
         # called repeatedly by buffer instance to feed it new
         #   frames of time-series values
+        # in turn it calls the time-series generator to return
+        #   a one-dimensional numpy array assumed to contain time-series values
 
         vals = self.gen.generate()
-        if len(vals) == 0:
-            print('Generator run completed')
 
-        return vals
+        if not isinstance(vals,np.ndarray) or vals.ndim >1:
+            print('\nAbort because signal generator return is not correct data type')
+            return []
+        
+        if vals.size == 0:
+            print('Generator run completed')
+            return []
+
+        # the time-series buffer works with a list rather than numpy array
+        return list(vals)
     
 
 if __name__ == '__main__':

@@ -82,8 +82,12 @@ class TimeSeriesServer(ms.StreamingServer):
             self.gen = self.handle_to_gen(c)
             
             # get parameter dictionary for this service
-            #     and store for future use and manipulation
             t = self.gen.parameters()
+            # add two readily available parameters
+            t['handle'] = self.gen.__handle__
+            t['description'] = self.gen.__doc__
+
+            # store parameter dictionary for future use and manipulation
             self.param.set(t)
             
             # send parameter dictionary to client in answer message
@@ -118,31 +122,37 @@ class TimeSeriesServer(ms.StreamingServer):
                 print('\nAborting because a parameter is out of bounds')
                 return [{},'Error: parameter {} out of bounds'.format(field)] 
 
-##            # configure protocol buffer service for this time-series generator
-##            t = self.gen.__transport__
+            # store parameters as variables in time-series generator
+            self.param_dict_to_var(self.gen, self.param.final())
             
-            # initialize signal generator and time-series buffer for a new run
-            self.gen.initialize(self.param.final())
-            print('\nNew time-series generator run')
+            # initialize signal generator for a new run
+            # returns s = set of transport-layer parameters which will
+            #   be returned to the client for conpatible configuation
+            s = self.gen.initialize()
+            
+            print('\nNew time-series generator run with transport configuration:')
+            pprint(s)
+
+            # initialize buffer for a new run
             self.buff.initialize()
 
-            # return configuration information for the client service
-            t = self.gen.__transport__
-            r = {'transport' : t }
-            return [r,'']
+            return [s,'']
 
-        
-    def initialize_generator(self):
-        # signal generator may be run more than once, so
-        #   define an initialization separate from object instantiation
+    def param_dict_to_var(self,obj,p):
+        # stores a set of parameters as variables for efficiency
+        # obj = object whose attributes are set
+        #   (typically a time-series generator)
+        # p = a dictonary of parameter values
+        # for example, value of a parameter named 'frame' becomes
+        #   a variable self.frame in object obj
 
-        self.gen.initialize(self.param.final())
-        print('\nNew time-series generator run')
+        for field in p.keys():
+            setattr(obj,field,p[field])       
       
     def get(self):
         # called repeatedly by buffer instance to feed it new
         #   frames of time-series values
-        # in turn it calls the time-series generator to return
+        # in turn it calls the time-series generate() function to return
         #   a one-dimensional numpy array assumed to contain time-series values
 
         vals = self.gen.generate()
@@ -155,7 +165,7 @@ class TimeSeriesServer(ms.StreamingServer):
             print('Generator run completed')
             return []
 
-        # the time-series buffer works with a list rather than numpy array
+        # convert the numpy array to a list used by buffer
         return list(vals)
     
 

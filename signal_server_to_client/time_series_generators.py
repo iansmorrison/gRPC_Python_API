@@ -11,6 +11,8 @@ Progammer David G Messerschmitt
 import numpy as np
 from pprint import pprint
 
+import time_series_server as tss
+
 '''
 To add a new signal generator, simply add a new class implementing that
 to this file. The name of this class matters not, except that it must be unique.
@@ -92,66 +94,78 @@ class CExpC():
     '''
     Time-series generator for a complex-exponential that streams complex
     values. The time-values are not streamed, and must be inferred by the client.
+    The streaming is divided into frames, whose size the client can control.
     '''
     
     # class variables (same values for all instances)
     __handle__ = 'complex_exponential_with_complex_transport'
-    __transport__ = 'complex_valued_streaming'
-
-    def __init__(self): pass
 
     def parameters(self):
         # specify configuration parameters, includng values (cannot be changed)
         #   and defaults (subject to change)
         # a default = None indicates that the client must specify a value
+        # a value = something is a value that is chosen by the server
+        #   and cannot be changed
 
-        t = {'service_type':'cexp'}
-        t['description'] = 'generator returns samples of a complex exponential \
-exp(j * 2*pi * phase(t) * t) where t = time'
+        t = {}
+        
         t['num_samples'] = {
-                          'description':'total duration of time-series in samples',
-                          'default':None,
-                          'minimum':1
+            'description':'total duration of time-series in samples',
+            'default':None,
+            'minimum':1
                           }
+        
         t['frame'] = {
-                        'description':'number of time-samples in each generated \
+            'description':'number of time-samples in each generated \
 time-series frame',
-                        'default':10,
-                        'minimum':1
+            'default':10,
+            'minimum':1
                         }
+        
         t['phase_initial'] = {
-                          'description':'phase of first time-sample \
-as fraction of 2*pi, in the range +-0.5',
-                          'default':0.,
-                          'minimum':-0.5,
-                          'maximum':+0.5
+            'description':'phase of first time-sample as fraction of 2*pi, \
+            in the range +-0.5',
+            'default':0.,
+            'minimum':-0.5,
+            'maximum':+0.5
                           }
+        
         t['phase_increment'] = {
-                        'description':'phase advance per time-sample as fraction \
-of 2*pi;  by sampling theorem, must be in the range +-0.5',
-                        'default':None,
-                        'minimum':-0.5,
-                        'maximum':+0.5
+            'description':'phase advance per time-sample as fraction \
+of 2*pi;  by sampling theorem, it must be in the range +-0.5',
+            'default':None,
+            'minimum':-0.5,
+            'maximum':+0.5
                         }
         return t
 
-    def initialize(self,parameter_dict):
-        print('\nInitialization of time-series generator')
-        print('\nTime-series generator will use the following parameters:')
-        pprint(parameter_dict)
-                  
-        # store final set of parameters as variables for efficiency
-        # for example, parameter 'frame' is stored in a variable self.frame
-        for field in parameter_dict.keys():
-            setattr(self,field,parameter_dict[field])
+    def initialize(self):
+        # initializes time-series generator for a new run
+        # returns the transport parameters chosen
+        #   (which pay depend on the values in the generator parameters)
 
+        # note: this object has already been equipped with a set of
+        #   attributes storing parameter values chosen by the client;
+        #   for example parameter 'frame' has been stored as attribute self.frame
+        
         self._count = 0  # number of time-values generated so far
+
+        # transport parameters returned to client for its configuration
+        # note that these typically depend on generation parameters
+        r = {
+            'data_type' : 'complex',  # must be 'real' or 'complex'
+            # exactly one time-series [] is generated
+            # 1-D ndarray of complex values with shape [self.frame]
+            'array_shapes': [ [self.frame] ]
+            }
+        
+        return r
         
     def generate(self):
         # generate one frame of time-values and return
         #   a one-dimensional numpy array continaing those values
-        # these values have dtype = complex because we specified
-        #   attribute __transport__ = 'complex_valued_streaming'
+        # these values have dtype=complex because we specified
+        #   'data_type' to be 
 
         # determine number of samples to generate this call
         total_remaining = self.num_samples - self._count
@@ -165,8 +179,8 @@ of 2*pi;  by sampling theorem, must be in the range +-0.5',
             vals = np.exp(arg)
             self._count += duration
             
-            # vals is one-dimensional so no serialization required
+            # vals = nupy array to be returned
+            # vals.shape must be consistent with 'array_shapes'
             return vals
 
         else: return np.array([])
-

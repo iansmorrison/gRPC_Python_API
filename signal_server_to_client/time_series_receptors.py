@@ -11,64 +11,14 @@ from pprint import pprint
 import numpy as np
 import matplotlib.pyplot as plt
 
-'''
-For the convenience of the different receptors, we implement some
-base classes that capture common functionality.
-New receptor classes are added below.
-'''
-
-class SingleTimeSeriesComplex():
-    '''
-    Time-series receptor for any generator that streams a time-series with complex
-    values. The time-values are not streamed. This base class generally has no
-    knowledge of how the time-series was generated, only its structure.
-    '''
-
-    # class variables (same values for all instances)
-    __handle__ = '' # specified by an inherited class
-    __transport__ = 'complex_valued_streaming'
-    
-    def __init__(self):
-
-        self.whole = np.array([])
-        
-    def receive(self,vals):
-        # lists of values coming from buffer
-        #   are pushed here to be processed and interpreted
-        # vals = numpy.ndarray with dtype = complex
-
-        if vals.size == 0: # entire time series received
-            self.wrapup()           
-        else:
-            self.whole = np.append(self.whole,vals)
-
-    def print(self,vals):
-        # print out the real- and imag-parts of a time series
-        # vals = numpy.ndarray with dtype = complex
-
-            print(
-                '\nTotal received time-series of length = ',
-                  self.whole.size, ':'
-                )
-            print('\nReal-part\n', np.around(self.whole.real, 3))
-            print('\nImag-part\n', np.around(self.whole.imag, 3))
-
-    def plot(self,vals):
-        # make a plot of the real- and imag-parts of a time-series
-        # vals = numpy.ndarray with dtype = complex
-
-            plt.plot(self.whole.real)
-            plt.plot(self.whole.imag)
-##            plt.axis([0, self.whole.size * T, -1, +1])
-            plt.title('Complex exponential')
-            plt.show()
+import time_series_client as tsc
 
 '''
 For each time-series generator, add a time-receptor class here.
 It is often convenient to inherit one of the preceding base classes,
 which receives frames of the time-series. This inherited class encapsulates
 knowledge of how the time-series was generated, including its parameterization.
-It is good practice to give this the same class name as the corresponding
+It is convenient to give this the same class name as the corresponding
 generator class (there is no namespace clash since client and server run
 in different processes).
 
@@ -76,35 +26,50 @@ Each receptor is assumed to have the following attributes:
 
     __handle__ = a 'popular' name for the receptor which is shared
         with the time-series generator with which it is coordinated
+        (it is used to pair a generator and receptor)
 
-    parmeters(parameter_dict) = a method which accepts a parameter dictionary
-        containing (possibly) default values, replaces those values with its
-        own choices, and returns that dictonary
+    parameters() = a method that returns a dictonary containing
+        parameter values it has set
 
-    wrapup() = a method which is called after the entire time-series
-        has been accumulated
+    receive() = a method used to push each time-division list of
+        time-series to the receptor
+
+    wrapup() = a method that is called after the entire time-series
+        has been accumulated; typically it does something with the final
+        time-series like printing or plotting
 '''
 
-class CExpC(SingleTimeSeriesComplex):
+class CExpC(tsc.MultiplexedComplexTimeSeries):
 
-    # class variables (same values for all instances)
     __handle__ = 'complex_exponential_with_complex_transport'
 
-    def __init__(self):
-
-        super().__init__()
-
-    def parameters(self,t):
+    def parameters(self):
         # configure parameter values for this service choice
         # t = default set of parameters as starting point
+        # parameters not explicitly set here will assume default values
 
+        t = {}
+        
         t['frame'] = 20
+        
         t['num_samples'] = 55
+        
         t['phase_increment'] = 0.01
 
         return t
 
-    def wrapup(self):
+    def receive(self,vals):
+        # lists of values pulled from buffer
+        #   are pushed here to be processed and interpreted
+        # vals = list of numpy arrays with vals.dtype = complex,
+        #   one for each time-multiplexed time-series
+
+        # in this receptor, we are interested only in the whole
+        #   time-series, so we call on accumlate()
+        self.accumulate(vals)
         
-        self.print(self.whole)
-        self.plot(self.whole)
+    def wrapup(self):
+        # any additional processing would be put there
+        
+        self.print(self.whole[0])
+        self.plot(self.whole[0])

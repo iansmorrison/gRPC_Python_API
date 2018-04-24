@@ -84,11 +84,103 @@ class CExpPlusTimeR():
 
     __handle__ = 'complex_exponential_with_times_and_real_transport'
 
-    # __transport__ specifies the gRPC service invoked by this generator
-    __transport__ = 'real_valued_streaming'
+    def parameters(self):
+        # specify configuration parameters, includng values (cannot be changed)
+        #   and defaults (subject to change)
+        # a default = None indicates that the client must specify a value
+        # a value = something is a value that is chosen by the server
+        #   and cannot be changed
 
-    def __init__(self): pass
+        t = {}
 
+        t['frame'] = {
+            'description':'number of time-samples in each generated \
+time-series frame',
+            'default':10,
+            'minimum':1
+                        }
+        
+        t['time_duration'] = {
+            'description':'total duration of time-series in samples',
+            'default':None,
+            'minimum':1
+                          }
+        
+        t['phase_initial'] = {
+            'description':'phase of first time-sample as fraction of 2*pi, \
+            in the range +-0.5',
+            'default':0.,
+            'minimum':-0.5,
+            'maximum':+0.5
+                          }
+
+        t['sampling_interval'] = {
+            'description':'time interval between samples in seconds',
+            'default':None,
+            'minimum':0.
+                        }
+
+        t['frequency'] = {
+            'description':'frequency in Hz',
+            'default':None,
+            'minimum':0.
+                        }
+        
+        return t
+
+    def initialize(self):
+        # initializes time-series generator for a new run
+        # returns the transport parameters chosen
+        #   (which pay depend on the values in the generator parameters)
+
+        # note: this object has already been equipped with a set of
+        #   attributes storing parameter values chosen by the client;
+        #   for example parameter 'frame' has been stored as attribute self.frame
+
+        self._num_samples = int( self.time_duration / self.sampling_interval )       
+        self._count = 0  # number of time-values generated so far
+
+        # transport parameters returned to client for its configuration
+        r = {
+            
+            'data_type' : 'real',  # must be 'real' or 'complex'
+            
+            # we will time-division multiplex three time-series:
+            # [times, reals, imags]
+            'array_shapes': [[self.frame]] * 3
+            }
+        
+        return r
+        
+    def generate(self):
+        # generate one frame of time-values and return
+        #   a one-dimensional numpy array continaing those values
+        # these values have dtype=complex because we specified
+        #   'data_type' to be 
+
+        # determine number of samples to generate this call
+        total_remaining = self._num_samples - self._count
+        start = self._count
+        duration = min(total_remaining,self.frame)
+
+        if duration > 0:
+
+            # array of time's
+            t = np.arange(start,start+duration,1) * self.sampling_interval
+
+            # array of phases
+            arg = 2 * np.pi * self.frequency * t
+
+            # evaluate complex exponential
+            vals = np.exp(1j * arg)
+            
+            self._count += duration
+
+            # time-division multiplex three real-valued time-series
+            return [ t, vals.real, vals.imag ]
+
+        else: return []
+        
 
 class CExpC():
     '''
@@ -96,8 +188,7 @@ class CExpC():
     values. The time-values are not streamed, and must be inferred by the client.
     The streaming is divided into frames, whose size the client can control.
     '''
-    
-    # class variables (same values for all instances)
+
     __handle__ = 'complex_exponential_with_complex_transport'
 
     def parameters(self):
@@ -151,9 +242,10 @@ of 2*pi;  by sampling theorem, it must be in the range +-0.5',
         self._count = 0  # number of time-values generated so far
 
         # transport parameters returned to client for its configuration
-        # note that these typically depend on generation parameters
         r = {
+            
             'data_type' : 'complex',  # must be 'real' or 'complex'
+            
             # exactly one time-series [] is generated
             # 1-D ndarray of complex values with shape [self.frame]
             'array_shapes': [ [self.frame] ]
@@ -181,6 +273,9 @@ of 2*pi;  by sampling theorem, it must be in the range +-0.5',
             
             # vals = nupy array to be returned
             # vals.shape must be consistent with 'array_shapes'
-            return vals
+
+            # return a list with length = 1
+            #   (since there is only one time-multiplexed signal)
+            return [vals]
 
         else: return np.array([])

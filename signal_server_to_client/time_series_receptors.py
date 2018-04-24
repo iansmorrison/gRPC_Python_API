@@ -39,9 +39,9 @@ Each receptor is assumed to have the following attributes:
         time-series like printing or plotting
 '''
 
-class CExpC(tsc.MultiplexedComplexTimeSeries):
+class CExpPlusTimeR(tsc.MultiplexedTimeSeries):
 
-    __handle__ = 'complex_exponential_with_complex_transport'
+    __handle__ = 'complex_exponential_with_times_and_real_transport'
 
     def parameters(self):
         # configure parameter values for this service choice
@@ -50,11 +50,13 @@ class CExpC(tsc.MultiplexedComplexTimeSeries):
 
         t = {}
         
-        t['frame'] = 20
+        t['frame'] = 15 # samples
         
-        t['num_samples'] = 55
+        t['time_duration'] = 100. # seconds
         
-        t['phase_increment'] = 0.01
+        t['frequency'] = 0.03 # Hz
+
+        t['sampling_interval'] = 1. # seconds
 
         return t
 
@@ -69,7 +71,69 @@ class CExpC(tsc.MultiplexedComplexTimeSeries):
         self.accumulate(vals)
         
     def wrapup(self):
-        # any additional processing would be put there
+
+        self.print(
+            'Sampling times:', 3,
+            self.whole[0]
+            )
+        self.print(
+            'Real parts:', 3,
+            self.whole[1]
+            )
+        self.print(
+            'Imag parts:', 3,
+            self.whole[2]
+            )
         
-        self.print(self.whole[0])
-        self.plot(self.whole[0])
+        self.plot(
+            'Complex exponential',
+            [0, self.time_duration, -1, +1], # range of axes
+            [self.whole[1],self.whole[2]]
+            )
+        
+    
+class CExpC(tsc.MultiplexedTimeSeries):
+
+    __handle__ = 'complex_exponential_with_complex_transport'
+
+    def parameters(self):
+        # configure parameter values for this service choice
+        # t = default set of parameters as starting point
+        # parameters not explicitly set here will assume default values
+
+        t = {}
+        
+        t['frame'] = 15
+        
+        t['num_samples'] = 100
+        
+        t['phase_increment'] = 0.01
+
+        return t
+
+    def receive(self,vals):
+        # lists of values pulled from buffer
+        #   are pushed here to be processed and interpreted
+        # vals = list of numpy arrays with vals.dtype = complex,
+        #   one for each time-multiplexed time-series    
+
+        # in this receptor, we are interested only in the whole
+        #   time-series, so we ask them to be accumlate()'ed
+        self.accumulate(vals)
+        
+    def wrapup(self):
+        
+        self.print(
+            'Real part:', 3,
+            self.whole[0].real
+            )
+        self.print(
+            'Imag part:', 3,
+            self.whole[0].imag
+            )
+        
+        self.plot(
+            'Complex exponential',
+            [0, self.num_samples, -1, +1], # range of axes
+            [self.whole[0].real,self.whole[0].imag]
+            )

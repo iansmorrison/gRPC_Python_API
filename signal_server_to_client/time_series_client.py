@@ -97,7 +97,8 @@ class TimeSeriesClient(gc.GenericClientStub):
 
                 # choose a service and find out its parameterization
                 #   (in the future this will probably be obtained from user)
-                choice = 'complex_exponential_with_complex_transport'
+##                choice = 'complex_exponential_with_complex_transport'
+                choice = 'complex_exponential_with_times_and_real_transport'
                 
                 if choice not in r['service_type'].keys():
                     self.abort = True
@@ -110,7 +111,7 @@ class TimeSeriesClient(gc.GenericClientStub):
                 print('\nParameters supported by this generator:\n')
                 pprint(r)
 
-                # instantiate a client for this service type
+                # instantiate a time-series receptor for this service type
                 self.rec = self.handle_to_rec(choice)
 
                 # store parameters for future use and manipulation
@@ -126,12 +127,13 @@ class TimeSeriesClient(gc.GenericClientStub):
 		# ask the receptor for changes to parameter values
                 p = self.rec.parameters()
                 self.param.update(p)
+                p = self.param.final()
                 
 		# configure the server parameters
                 print('\nChosen parameters sent to server:\n')
-                pprint(self.param.final())
-                # store parameter values in variables for efficiency
-                self.param_dict_to_var()
+                pprint(p)
+                # store parameter values as attributes for efficiency
+                self.param_dict_to_var(self.rec,p)
 
                 # inform server of parameters chosen
                 # server returns generator configuration information
@@ -156,15 +158,12 @@ class TimeSeriesClient(gc.GenericClientStub):
                 self.sizes = [None] * self.num
                 for i in range(self.num):
                     self.sizes[i] = np.prod(self.shapes[i])
+                self.total = sum(self.sizes)
                 
                 # configure the receptor
                 self.rec.shapes(self.shapes)
-                
-                print('\nShapes of the generated arrays:')
-                for i in range(len(self.shapes)):
-                    print('Time-series {}: '.format(i+1),self.shapes[i])
 
-	#   ********** runtime operations *************
+	#   ********** runtime operations *************   #
 
         def stream(self):
 		# method is invoked to capture signal stream from gRPC channel
@@ -214,7 +213,7 @@ class TimeSeriesClient(gc.GenericClientStub):
                     return vals
 
         def retrieve(self):
-            # fetch a stream of lists with 'real' or 'complex'values from
+            # fetch a stream of lists with 'real' or 'complex' values from
             #   buffer, convert to numpy array's, reshape, and push to
             #   the time-series receptor
             # returns a list of numpy arrays,
@@ -225,34 +224,29 @@ class TimeSeriesClient(gc.GenericClientStub):
                 # time-series of different shapes are time-division multiplexed
                 # round robin through these time-series
 
-                vals = [None] * self.num
+                # fetch one complete frame from buffer
+                vl = self.buff.get(self.total)
+                # temporary storage for manipulation
+                size = len(vl)
+                shapes = self.shapes
+                sizes = self.sizes
+
+                if size == 0:
+                    self.rec.receive([])
+                    return
+                elif size < self.total:
+                    # the time dimension [0] is smaller in proportion
+                    for i in range(self.num):
+                        shapes[i][0] = int( self.shapes[i][0] * size / self.total )
+                        sizes[i] = np.prod(shapes[i])
                 
+                vals = [None] * self.num
+                start = 0
                 for i in range(self.num):
-
-                    size = self.sizes[i]
-                    shape = self.shapes[i]
-                    actual_shape = shape
-                    
-                    # retreive appropriate number of values from buffer
-                    vl = self.buff.get(size)
-##                    print('\nSeries # = :',i,'Values:\n',vl)
-
-                    # a complication is that the final vl may have
-                    #   a smaller size
-                    actual_size = len(vl)
-
-                    if actual_size == 0:
-                        vals[i] = []
-                        self.rec.receive([])
-                        break
-                    elif actual_size == size: pass
-                    else:
-                        # the time dimension [0] is smaller in proportion
-                        actual_shape[0] = int(shape[0] * actual_size / size)
-                    
-                    # convert to a numpy array object and reshape
-                    vals[i] = np.array(vl).reshape(actual_shape,order='C')
-                    
+                    vl0 = vl[start:start+sizes[i]]
+                    vals[i] = np.array(vl0).reshape(shapes[i],order='C')
+                    start += sizes[i]
+                                        
                 # push list of array's to the time-series receptor
                 self.rec.receive(vals)
            
@@ -264,19 +258,20 @@ class TimeSeriesClient(gc.GenericClientStub):
                 if not self.abort: self.stream()
                 if not self.abort: self.retrieve()
                         
-        def param_dict_to_var(self):
-                # stores final set of parameters as variables for efficiency
+        def param_dict_to_var(self,obj,p):
+                # stores final set of parameters as attributes for efficiency
                 # for example, value of a parameter named 'frame' becomes
                 #   variable self.frame
-                
-                p = self.param.final()
+                # obj = object where attributes are set
+                # p = dictionary of parameters
+
                 for field in p.keys():
-                        setattr(self,field,p[field])
+                    setattr(obj, field,p[field])
                
 '''
-For the convenience of the different receptors, we implement some
-base classes that capture common functionality.
-Time-series receptor classes can inherit these classes at their option.
+For the convenience of the different receptors, we implement a
+base class that captures common functionality.
+Time-series receptor classes can inherit this class at their option.
 '''
 
 class MultiplexedTimeSeries():
@@ -309,7 +304,7 @@ class MultiplexedTimeSeries():
         #   thus abandoning the frame structure
         # inherited class may need to deal with frames directly
         #   (as in a feedback situation)
-        #   in which case it doesn't need to call this method
+        #   in which case it doesn't call this method
 
         if len(vals) == 0: # we have reached end of time-series
             self.wrapup()
@@ -322,34 +317,34 @@ class MultiplexedTimeSeries():
             else:
                 self.whole[i] = np.append(self.whole[i],vals[i])
 
-
-class MultiplexedComplexTimeSeries(MultiplexedTimeSeries):
-    '''
-    Class provides some common facilities for time-division multiplexed
-    time-series which have complex-values.
-    '''
-
-    def print(self,vals):
-        # print out the real- and imag-parts of a time series
-        # vals = numpy.ndarray with dtype = complex
+    def print(self,title,res,vals):
+        # print out a time-series
+        # title = string to print before vals
+        # res = resolution (number of digits) in the printout
+        # vals = a numpy array with dtype = real
 
             print(
-                '\nTotal received time-series of length = ',
+                '\n{} with size = '.format(title),
                   vals.size, ':'
                 )
-            print('\nReal-part\n', np.around(vals.real, 3))
-            print('\nImag-part\n', np.around(vals.imag, 3))
+            pprint(np.around(vals, res))
 
-    def plot(self,vals):
-        # make a plot of the real- and imag-parts of a time-series
-        # vals = numpy.ndarray with dtype = complex
+    def plot(self,title,axes,vals):
+        # make a plot on a single graph of a set of 1-D time-series
+        # title = title to print about the graph
+        # axes = list containing the range of x and y axis
+        # vals = list of numpy array's with dtype = real
 
-            plt.plot(vals.real)
-            plt.plot(vals.imag)
-##            plt.axis([0, self.whole.size * T, -1, +1])
-            plt.title('Complex exponential')
-            plt.show()
-            
+        print(len(vals))
+
+        for i in range(len(vals)):
+            plt.plot(vals[i])
+
+        plt.axis(axes)
+        plt.title(title)
+        plt.show()
+
+          
 if __name__ == '__main__':
 
     s = TimeSeriesClient()

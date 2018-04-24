@@ -127,7 +127,7 @@ class TimeSeriesServer(ms.StreamingServer):
             
             # initialize signal generator for a new run
             # returns s = set of transport-layer parameters which will
-            #   be returned to the client for conpatible configuation
+            #   be returned to the client for compatible configuation
             s = self.gen.initialize()           
             print('\nNew time-series generator run with transport configuration:')
             pprint(s)
@@ -170,20 +170,20 @@ class TimeSeriesServer(ms.StreamingServer):
                 print("\nError: Time series generator output is not a list of time-series array's")
                 return []
             elif len(self.vals_list) == 0:
-                print('Generator run completed')
+                print('\nGenerator run completed')
                 return []
             elif not len(self.vals_list) == len(self.shapes):
                 print('\nError: Time series generator returned list of time-series with wrong length')
                 return []
         
         vals = self.vals_list[self.sent]
-        print('\nself.sent =: ',self.sent,'\n',vals)
         self.sent += 1
         if self.sent == len(self.vals_list):
             self.sent = 0
         
         if not isinstance(vals, np.ndarray):
             print('\nError: Time-series generator failed to return a numpy array')
+            print('\nValues returned:\n',vals)
             return []
         
         # flatten the numpy array and convert to a 1-D list

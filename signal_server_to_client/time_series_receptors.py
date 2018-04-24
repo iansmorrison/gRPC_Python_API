@@ -67,14 +67,21 @@ class CExpPlusTimeR(tsc.MultiplexedTimeSeries):
         #   one for each time-multiplexed time-series
 
         # in this receptor, we are interested only in the whole
-        #   time-series, so we call on accumlate()
-        self.accumulate(vals)
+        #   time-series, so we call on accumlate() which populates
+        # the list of complete time-series self.whole
+
+        if len(vals) == 0:
+            self.wrapup()
+        else:
+            self.accumulate(vals)
         
     def wrapup(self):
 
+        # display times as well as real and imag parts of time-series
+
         self.print(
             'Sampling times:', 3,
-            self.whole[0]
+            self.whole[0] / self.time_duration
             )
         self.print(
             'Real parts:', 3,
@@ -86,9 +93,9 @@ class CExpPlusTimeR(tsc.MultiplexedTimeSeries):
             )
         
         self.plot(
-            'Complex exponential',
+            'Time and real/imag parts of a complex exponential',
             [0, self.time_duration, -1, +1], # range of axes
-            [self.whole[1],self.whole[2]]
+            [self.whole[0]/self.time_duration, self.whole[1], self.whole[2]]
             )
         
     
@@ -119,7 +126,12 @@ class CExpC(tsc.MultiplexedTimeSeries):
 
         # in this receptor, we are interested only in the whole
         #   time-series, so we ask them to be accumlate()'ed
-        self.accumulate(vals)
+        #   with result stored in self.whole
+
+        if len(vals) == 0: # we have reached end of time-series
+            self.wrapup()
+        else:
+            self.accumulate(vals)
         
     def wrapup(self):
         
@@ -137,3 +149,4 @@ class CExpC(tsc.MultiplexedTimeSeries):
             [0, self.num_samples, -1, +1], # range of axes
             [self.whole[0].real,self.whole[0].imag]
             )
+

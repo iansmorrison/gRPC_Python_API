@@ -9,16 +9,15 @@
 {\list\listtemplateid5\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{square\}}{\leveltext\leveltemplateid401\'01\uc0\u9642 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid5}
 {\list\listtemplateid6\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{square\}}{\leveltext\leveltemplateid501\'01\uc0\u9642 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid6}
 {\list\listtemplateid7\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{square\}}{\leveltext\leveltemplateid601\'01\uc0\u9642 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid7}
-{\list\listtemplateid8\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{square\}}{\leveltext\leveltemplateid701\'01\uc0\u9642 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid8}
-{\list\listtemplateid9\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{square\}}{\leveltext\leveltemplateid801\'01\uc0\u9642 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid9}}
-{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}{\listoverride\listid3\listoverridecount0\ls3}{\listoverride\listid4\listoverridecount0\ls4}{\listoverride\listid5\listoverridecount0\ls5}{\listoverride\listid6\listoverridecount0\ls6}{\listoverride\listid7\listoverridecount0\ls7}{\listoverride\listid8\listoverridecount0\ls8}{\listoverride\listid9\listoverridecount0\ls9}}
+{\list\listtemplateid8\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{square\}}{\leveltext\leveltemplateid701\'01\uc0\u9642 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid8}}
+{\*\listoverridetable{\listoverride\listid1\listoverridecount0\ls1}{\listoverride\listid2\listoverridecount0\ls2}{\listoverride\listid3\listoverridecount0\ls3}{\listoverride\listid4\listoverridecount0\ls4}{\listoverride\listid5\listoverridecount0\ls5}{\listoverride\listid6\listoverridecount0\ls6}{\listoverride\listid7\listoverridecount0\ls7}{\listoverride\listid8\listoverridecount0\ls8}}
 \margl1440\margr1440\vieww20000\viewh21340\viewkind0
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 
 \f0\b\fs36 \cf0 Time-series streaming demo\
 \
 Programmer David G Messerschmitt\
-16 April 2018\
+Last modified: 24 April 2018\
 \
 This is a demonstration of remote access to a time-series based on a standard interface at the network level. This interface is based on two widely used and well supported open standards:\
 \
@@ -39,25 +38,28 @@ The time-series model supported is quite general. The common thread is that a se
 \
 Running the demo:\
 \
-The demo currently runs on a localhost. In separate processes run time_series_server.py, and then time_series_client.py. Each of client and server will write to its respective shell window indicating what it is doing. The client will finish with a plot of the signal that was generated in the server and conveyed to the client.\
+The demo currently runs on a localhost. In separate processes run time_series_server.py, and then time_series_client.py. Each of client and server will write to its respective shell window indicating what it is doing. \
+The client will start by displaying a list of time-series generators that are currently available from the server, and ask which one you wish to choose. It will then display a set of metadata parameters, which are sufficient to configure a receptor coordinated with that generator. The client will finish with a printout and plot of a signal that was generated in the server and conveyed to the client by gRPC.\
 \
-To implement new types of time-series, new coordinated classes can easily be added to time_series_generators.py and time_series_receptors.py. This is structured so that adding new time-series does not involve modifications to the time-series server and client, nor does it require knowledge of gRPC.\
+To implement new types of time-series, new coordinated classes can easily be added to time_series_generators.py and time_series_receptors.py. This is structured so that adding new time-series does not involve modifications to the time-series server and client, nor does it require knowledge of gRPC or JSON. Neither does it require any knowledge of the corresponding generator beyond what metadata parameters it uses.\
 \
-The structure of files generally confirms to the layers:\
+The following is a list of files and their purpose:\
 \
-Signal generation and reception (edit to add new time-series types):\
+Signal generation and reception (edit these to add new time-series generators/receptors):\
+\
 \pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
 \ls2\ilvl0\cf0 {\listtext	
 \f1 \uc0\u9642 
-\f0 	}time_series_generators.py\
+\f0 	}time_series_generators.py (server side)\
 {\listtext	
 \f1 \uc0\u9642 
-\f0 	}time_series_receptors.py\
+\f0 	}time_series_receptors.py (client side)\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 \cf0 \
 (The following files should not require editing.)\
 \
-Discovery, configuration, and streaming:\
+Discovery, configuration, and streaming (execute these files with python3 in separate processes in order to run the demo):\
+\
 \pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
 \ls3\ilvl0\cf0 {\listtext	
 \f1 \uc0\u9642 
@@ -67,16 +69,10 @@ Discovery, configuration, and streaming:\
 \f0 	}time_series_client.py\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 \cf0 \
-gRPC stub for server:\
+Interface to gRPC services:\
+\
 \pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
 \ls4\ilvl0\cf0 {\listtext	
-\f1 \uc0\u9642 
-\f0 	}message_server.py\
-\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
-\cf0 \
-Run server and client:\
-\pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
-\ls5\ilvl0\cf0 {\listtext	
 \f1 \uc0\u9642 
 \f0 	}generic_server.py\
 {\listtext	
@@ -84,19 +80,21 @@ Run server and client:\
 \f0 	}generic_client.py\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 \cf0 \
-Routines in support of these functions:\
+Class definitions in support of client and server functions:\
+\
 \pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
-\ls6\ilvl0\cf0 {\listtext	
+\ls5\ilvl0\cf0 {\listtext	
 \f1 \uc0\u9642 
-\f0 	}parameters.py\
+\f0 	}parameters.py (store and manipulate metadata parameters)\
 {\listtext	
 \f1 \uc0\u9642 
-\f0 	}buffer.py\
+\f0 	}buffer.py (a buffer between gRPC and signal generator/receptor)\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 \cf0 \
-Definition of gRPC service:\
+Definition of gRPC service. These files are compiled into Python code supporting gRPC:\
+\
 \pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
-\ls7\ilvl0\cf0 {\listtext	
+\ls6\ilvl0\cf0 {\listtext	
 \f1 \uc0\u9642 
 \f0 	}time_series_streaming.proto\
 {\listtext	
@@ -105,14 +103,17 @@ Definition of gRPC service:\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 \cf0 \
 Compile .proto file:\
+\
 \pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
-\ls8\ilvl0\cf0 {\listtext	
+\ls7\ilvl0\cf0 {\listtext	
 \f1 \uc0\u9642 
 \f0 	}run_codegen.py\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
-\cf0 Resulting code-generated files:\
+\cf0 \
+Resulting code-generated files:\
+\
 \pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
-\ls9\ilvl0\cf0 {\listtext	
+\ls8\ilvl0\cf0 {\listtext	
 \f1 \uc0\u9642 
 \f0 	}time_series_streaming_pb2.py\
 {\listtext	

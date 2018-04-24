@@ -39,6 +39,7 @@ class TimeSeriesClient(gc.GenericClientStub):
 
         def __init__(self):
 
+
                 # create a dictionary of all available time-series receptors
                 #   which are assumed to be implemented as classes in module cr
                 self.receptors = {}
@@ -55,7 +56,7 @@ class TimeSeriesClient(gc.GenericClientStub):
                 self.abort = False # a fatal error has occured?
 
                 super().__init__()
-                
+
         def handle_to_rec(self,handle):
             # look up the receptor class associated with a given handle
             # returns an instance of that class
@@ -91,28 +92,28 @@ class TimeSeriesClient(gc.GenericClientStub):
                 [r,a] = self.metadata_message_and_response('service_types?', {})
 
                 print('\nList of time-series generators available:')
-                for name in r['service_type'].keys():
-                    print('\nService: {}:'.format(name))
-                    print(r['service_type'][name])
+                names = list(r['service_type'].keys())
+                for i in range(len(names)):
+                    print('\nService #{}:'.format(i+1),'\nHandle: ',names[i])
+                    print('Description:\n',r['service_type'][names[i]])
+                    
+                c = input('\nNumber (#) of generator choice? ')
+                self.choice = names[int(c)-1]
+                print('\nGenerator chosen:\n',self.choice)
 
-                # choose a service and find out its parameterization
-                #   (in the future this will probably be obtained from user)
-##                choice = 'complex_exponential_with_complex_transport'
-                choice = 'complex_exponential_with_times_and_real_transport'
-                
-                if choice not in r['service_type'].keys():
+                # substantiate the choice of time-series generator              
+                if self.choice not in r['service_type'].keys():
                     self.abort = True
-                    print('\nChosen service type not available')
-                    return
-                
-                print('\nTime-series generator chosen: ', choice)
-                p = {'service_choice' : choice}
+                    print('\nChosen generator {} not available'.format(self.choice))
+                    return               
+                print('\nTime-series generator chosen: ', self.choice)
+                p = {'service_choice' : self.choice}
                 [r,a] = self.metadata_message_and_response('service_choice', p)
                 print('\nParameters supported by this generator:\n')
                 pprint(r)
 
                 # instantiate a time-series receptor for this service type
-                self.rec = self.handle_to_rec(choice)
+                self.rec = self.handle_to_rec(self.choice)
 
                 # store parameters for future use and manipulation
                 self.param.set(r)
@@ -219,36 +220,36 @@ class TimeSeriesClient(gc.GenericClientStub):
             # returns a list of numpy arrays,
             #   one for each time-multiplexed series
 
-            while True:
+                while True:
 
-                # time-series of different shapes are time-division multiplexed
-                # round robin through these time-series
+                        # time-series of different shapes are time-division multiplexed
+                        # round robin through these time-series
 
-                # fetch one complete frame from buffer
-                vl = self.buff.get(self.total)
-                # temporary storage for manipulation
-                size = len(vl)
-                shapes = self.shapes
-                sizes = self.sizes
+                        # fetch one complete frame from buffer
+                        vl = self.buff.get(self.total)
+                        # temporary storage for manipulation
+                        size = len(vl)
+                        shapes = self.shapes
+                        sizes = self.sizes
 
-                if size == 0:
-                    self.rec.receive([])
-                    return
-                elif size < self.total:
-                    # the time dimension [0] is smaller in proportion
-                    for i in range(self.num):
-                        shapes[i][0] = int( self.shapes[i][0] * size / self.total )
-                        sizes[i] = np.prod(shapes[i])
-                
-                vals = [None] * self.num
-                start = 0
-                for i in range(self.num):
-                    vl0 = vl[start:start+sizes[i]]
-                    vals[i] = np.array(vl0).reshape(shapes[i],order='C')
-                    start += sizes[i]
-                                        
-                # push list of array's to the time-series receptor
-                self.rec.receive(vals)
+                        if size == 0:
+                            self.rec.receive([])
+                            break
+                        elif size < self.total:
+                            # the time dimension [0] is smaller in proportion
+                            for i in range(self.num):
+                                shapes[i][0] = int( self.shapes[i][0] * size / self.total )
+                                sizes[i] = np.prod(shapes[i])
+
+                        vals = [None] * self.num
+                        start = 0
+                        for i in range(self.num):
+                            vl0 = vl[start:start+sizes[i]]
+                            vals[i] = np.array(vl0).reshape(shapes[i],order='C')
+                            start += sizes[i]
+                                                
+                        # push list of array's to the time-series receptor
+                        self.rec.receive(vals)
            
         def run(self):
                 # orchestrate stages of operation
@@ -305,13 +306,8 @@ class MultiplexedTimeSeries():
         # inherited class may need to deal with frames directly
         #   (as in a feedback situation)
         #   in which case it doesn't call this method
-
-        if len(vals) == 0: # we have reached end of time-series
-            self.wrapup()
-            return
-
+        
         for i in range(len(self.shapes)):
-
             if self.whole[i].size == 0:
                 self.whole[i] = vals[i]
             else:
@@ -335,8 +331,6 @@ class MultiplexedTimeSeries():
         # axes = list containing the range of x and y axis
         # vals = list of numpy array's with dtype = real
 
-        print(len(vals))
-
         for i in range(len(vals)):
             plt.plot(vals[i])
 
@@ -344,8 +338,10 @@ class MultiplexedTimeSeries():
         plt.title(title)
         plt.show()
 
-          
+
 if __name__ == '__main__':
 
+    print('\nStarting run')         
+    choice = 'complex_exponential_with_complex_transport'
     s = TimeSeriesClient()
     s.run()

@@ -35,6 +35,3 @@ class GenericClientStub():
 
         # instantiate a client stub listening to this channel
         self.channel = s(c)
-
-
-

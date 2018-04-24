@@ -271,11 +271,12 @@ of 2*pi;  by sampling theorem, it must be in the range +-0.5',
             vals = np.exp(arg)
             self._count += duration
             
-            # vals = nupy array to be returned
+            # vals = numpy array to be returned
             # vals.shape must be consistent with 'array_shapes'
 
             # return a list with length = 1
             #   (since there is only one time-multiplexed signal)
             return [vals]
 
-        else: return np.array([])
+##        else: return np.array([])
+        else: return []

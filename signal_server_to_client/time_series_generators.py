@@ -17,7 +17,7 @@ import time_series_server as tss
 To add a new signal generator, simply add a new class implementing that
 to this file. The name of this class matters not, except that it must be unique.
 
-Each generator is expected to have a docstring, which is the descrption of
+Each generator is expected to have a docstring, which is the description of
 the generator conveyed to the client. It should give them sufficient information
 to make an informed choice of that generator.
 
@@ -36,13 +36,13 @@ multi-dimensional numpy array containing scalar, vector, or matrix values.
 For example, video would be a time-series of matrix values, each representing
 one frame of the video. The array may or may not include a dimension containing
 the times values, and it may or may not include a dimension containing the real- and
-imag-parts of a complex value. The number of dimensions and the meanng of those
+imag-parts of a complex value. The number of dimensions and the meaning of those
 dimensions is a matter of convention established between coordinated generator
 and client implementations and documented by the parameter dictionary (below).
 
 Generally 'real_valued_streaming' is preferred because it is more general.
 For example, it would be inefficient to represent time-values by dtype = complex values.
-It is straightfoward to represent complex values by a dimension containing the
+It is straightforward to represent complex values by a dimension containing the
 real- and imag-parts of that value.
 
 Each generator class must have two methods:
@@ -50,7 +50,7 @@ Each generator class must have two methods:
     parameters() is called exactly once and returns a dictionary
         containing all the parameters of the generator        
         and a description of their meaning and their default values.
-        This dictiionary is the sole documentation presented to the user,
+        This dictionary is the sole documentation presented to the user,
         and is expected to have sufficient information and detail to allow
         the user to properly configure the generator.
         
@@ -85,7 +85,7 @@ class CExpPlusTimeR():
     __handle__ = 'complex_exponential_with_times_and_real_transport'
 
     def parameters(self):
-        # specify configuration parameters, includng values (cannot be changed)
+        # specify configuration parameters, including values (cannot be changed)
         #   and defaults (subject to change)
         # a default = None indicates that the client must specify a value
         # a value = something is a value that is chosen by the server
@@ -255,7 +255,7 @@ of 2*pi;  by sampling theorem, it must be in the range +-0.5',
         
     def generate(self):
         # generate one frame of time-values and return
-        #   a one-dimensional numpy array continaing those values
+        #   a one-dimensional numpy array containaing those values
         # these values have dtype=complex because we specified
         #   'data_type' to be 
 

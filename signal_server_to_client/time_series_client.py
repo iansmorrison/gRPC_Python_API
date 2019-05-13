@@ -1,5 +1,5 @@
 """
-The Python implementation of a time-series streaming clinet
+The Python implementation of a time-series streaming client
 This version uses a both a repeated field (for efficiency)
   and streaming (for long-duration signals) to return multiple complex samples
 It includes support for both real- and complex-valued samples

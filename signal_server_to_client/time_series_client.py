@@ -331,6 +331,8 @@ class MultiplexedTimeSeries():
         # axes = list containing the range of x and y axis
         # vals = list of numpy array's with dtype = real
 
+        plt.figure(title)
+        
         for i in range(len(vals)):
             plt.plot(vals[i])
 

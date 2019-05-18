@@ -8,7 +8,9 @@ Progammer David G Messerschmitt
 16 April 2018
 """
 
+import os
 import numpy as np
+from scipy import signal
 from pprint import pprint
 
 import time_series_server as tss
@@ -154,9 +156,9 @@ time-series frame',
         
     def generate(self):
         # generate one frame of time-values and return
-        #   a one-dimensional numpy array continaing those values
+        #   a one-dimensional numpy array containing those values
         # these values have dtype=complex because we specified
-        #   'data_type' to be 
+        #   'data_type' to be complex
 
         # determine number of samples to generate this call
         total_remaining = self._num_samples - self._count
@@ -279,4 +281,206 @@ of 2*pi;  by sampling theorem, it must be in the range +-0.5',
             return [vals]
 
 ##        else: return np.array([])
+        else: return []
+
+
+class SigMFfileBrowser():
+    '''
+    This signal generator reads a range of complex values of a SigMF
+    file containing a recorded signal. It streams the real and imaginary
+    time series as two separate signals to the client.
+    '''
+
+    __handle__ = 'browse samples stored in a SigMF file'
+
+    def parameters(self):
+        # specify configuration parameters, including values (cannot be changed)
+        #   and defaults (subject to change)
+        # a default = None indicates that the client must specify a value
+        # a value = something is a value that is chosen by the server
+        #   and cannot be changed
+
+        t = {}
+
+        # No attempt to make the path platform-independent
+        t['directory_path'] = {
+            'description':'path to access the repository of SigMF files',
+              'default':'/Users/messer/Documents/Moved from Google Drive/Python/ATA SigMF'
+                      }
+
+        t['file_name'] = {
+            'description':'name of specific SigMF file',
+              'default':'rosetta-2010-06-04.sigmf-data'
+                      }
+          
+        t['starting_sample'] = {
+            'description':'index of starting sample',
+            'default':0,
+            'minimum':0
+                        }
+        
+        t['total_sample_count'] = {
+            'description':'total number of samples',
+            'default':100,
+            'minimum':1
+                          }
+        
+        return t
+
+    def initialize(self):
+        # initializes time-series generator for a new run
+        # returns the transport parameters chosen
+        #   (which pay depend on the values in the generator parameters)
+
+        # note: this object has already been equipped with a set of
+        #   attributes storing parameter values chosen by the client;
+        #   for example parameter 'frame' has been stored as attribute self.frame
+
+        os.chdir(self.directory_path)
+        self.file_map = np.memmap(self.file_name,dtype=np.byte)
+
+        # No check of indexes against file length yet but this will be useful
+        #   for that purpose
+        self.total_file_length = self.file_map.size
+
+        # Keep track of number of calls
+        self.call_count = 0
+
+        # transport parameters returned to client for its configuration
+        r = {
+            
+            'data_type' : 'real',  # must be 'real' or 'complex'
+            
+            # we will time-division multiplex two time-series:
+            # [reals, imags]
+            'array_shapes': [[self.total_sample_count]] * 2
+            }
+        
+        return r
+        
+    def generate(self):
+        # generate one frame of time-values and return
+        #   a one-dimensional numpy array containing those values
+        # these values have dtype=real because we specified
+        #   'data_type' to be float
+
+        if self.call_count < 1:
+            
+            # Odd values (starting with index one) are the real part
+            self.datavals_real = \
+                self.file_map[self.starting_sample:self.starting_sample+2*self.total_sample_count:2]
+            # Repeat starting with index two to get the complex part
+            self.datavals_imag = \
+                self.file_map[self.starting_sample+1:self.starting_sample+2*self.total_sample_count][::2]
+            
+            self.call_count += 1
+
+            # time-division multiplex real and imag time-series
+            return [ self.datavals_real, self.datavals_imag ]
+
+        else: return []
+
+class SigMFfilePeriodogram():
+    '''
+    This signal generator reads a range of complex values of a SigMF
+    file containing a recorded signal. It calculates a Welsh periodogram
+    on the resuting range.
+    '''
+
+    __handle__ = 'generate a Welch periodogram on a SigMF file'
+
+    def parameters(self):
+        # specify configuration parameters, including values (cannot be changed)
+        #   and defaults (subject to change)
+        # a default = None indicates that the client must specify a value
+        # a value = something is a value that is chosen by the server
+        #   and cannot be changed
+
+        t = {}
+
+        # No attempt to make the path platform-independent
+        t['directory_path'] = {
+            'description':'path to access the repository of SigMF files',
+            'default':'/Users/messer/Documents/Moved from Google Drive/Python/ATA SigMF'
+                      }
+
+        t['file_name'] = {
+            'description':'name of specific SigMF file',
+            'default':'rosetta-2010-06-04.sigmf-data'
+                      }
+          
+        t['starting_sample'] = {
+            'description':'index of starting sample',
+            'default':0,
+            'minimum':0
+                        }
+        
+        t['total_sample_count'] = {
+            'description':'total number of samples',
+            'default':10000,
+            'minimum':1
+                          }
+        
+        return t
+
+    def initialize(self):
+        # initializes time-series generator for a new run
+        # returns the transport parameters chosen
+        #   (which pay depend on the values in the generator parameters)
+
+        # note: this object has already been equipped with a set of
+        #   attributes storing parameter values chosen by the client;
+        #   for example parameter 'frame' has been stored as attribute self.frame
+
+        os.chdir(self.directory_path)
+        self.file_map = np.memmap(self.file_name,dtype=np.byte)
+
+        # No check of indexes against file length yet but this will be useful
+        #   for that purpose
+        self.total_file_length = self.file_map.size
+
+        # Keep track of number of calls
+        self.call_count = 0
+
+        # transport parameters returned to client for its configuration
+        r = {
+            
+            'data_type' : 'real',  # must be 'real' or 'complex'
+            
+            # we will time-division multiplex two time-series:
+            # [frequencies, spectrum]
+            # 256 is default analysis window for signal.welch
+            'array_shapes': [[256],[256]]
+            }
+
+        print('Transport charcteristic: ', r)
+        
+        return r
+        
+    def generate(self):
+        # generate one frame of time-values and return
+        #   a one-dimensional numpy array containing those values
+        # these values have dtype=real because we specified
+        #   'data_type' to be float
+
+        if self.call_count < 1:
+    
+            # Odd values (starting with index one) are the real part
+            self.datavals_real = \
+                self.file_map[self.starting_sample:self.starting_sample+2*self.total_sample_count:2]
+            # Repeat starting with index two to get the complex part
+            self.datavals_imag = \
+                self.file_map[self.starting_sample+1:self.starting_sample+2*self.total_sample_count][::2]
+
+            # Do the periodogram
+            self.f, self.PS = \
+               signal.welch(self.datavals_real + 1j*self.datavals_imag,scaling='spectrum')
+
+            print('Debug: Periodogram array sizes', self.f.size, self.PS.size)
+            
+            self.call_count += 1
+
+            # time-division multiplex frequency and spectrum
+            return [ self.f, self.PS ]
+
         else: return []

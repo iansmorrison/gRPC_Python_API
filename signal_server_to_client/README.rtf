@@ -38,9 +38,18 @@ The time-series model supported is quite general. The common thread is that a se
 \
 Running the demo:\
 \
-The demo currently runs on a localhost. In separate processes run time_series_server.py, and then time_series_client.py. Each of client and server will write to its respective shell window indicating what it is doing. \
-The client will start by displaying a list of time-series generators that are currently available from the server, and ask which one you wish to choose. It will then display a set of metadata parameters, which are sufficient to configure a receptor coordinated with that generator. The client will finish with a printout and plot of a signal that was generated in the server and conveyed to the client by gRPC.\
+The demo currently runs in two processes on a localhost. Instantiate two terminal windows. In the first run\
 \
+idle3 time_series_server.py\
+\
+and execute the code in the server window. In the second run\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf0 idle3 time_series_client.py\
+\
+and execute the code in the client window. Each of client and server will write to its respective shell window indicating what it is doing.  The client will start by displaying a list of time-series generators that are currently available from the server, and ask which one you wish to choose. It will then display a set of metadata parameters, which are sufficient to configure a receptor coordinated with that generator. The client will finish with a printout and plot of a signal that was generated in the server and conveyed to the client by gRPC.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
 To implement new types of time-series, new coordinated classes can easily be added to time_series_generators.py and time_series_receptors.py. This is structured so that adding new time-series does not involve modifications to the time-series server and client, nor does it require knowledge of gRPC or JSON. Neither does it require any knowledge of the corresponding generator beyond what metadata parameters it uses.\
 \
 The following is a list of files and their purpose:\

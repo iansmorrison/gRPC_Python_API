@@ -1,5 +1,6 @@
-{\rtf1\ansi\ansicpg1252\cocoartf1671\cocoasubrtf400
-{\fonttbl\f0\fswiss\fcharset0 Helvetica-Bold;\f1\fnil\fcharset0 LucidaGrande-Bold;}
+{\rtf1\ansi\ansicpg1252\cocoartf1671\cocoasubrtf500
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;\f1\fswiss\fcharset0 Helvetica-Bold;\f2\fnil\fcharset0 LucidaGrande-Bold;
+}
 {\colortbl;\red255\green255\blue255;}
 {\*\expandedcolortbl;;}
 {\*\listtable{\list\listtemplateid1\listhybrid{\listlevel\levelnfc23\levelnfcn23\leveljc0\leveljcn0\levelfollow0\levelstartat1\levelspace360\levelindent0{\*\levelmarker \{check\}}{\leveltext\leveltemplateid1\'01\uc0\u10003 ;}{\levelnumbers;}\fi-360\li720\lin720 }{\listname ;}\listid1}
@@ -14,120 +15,142 @@
 \margl1440\margr1440\vieww20000\viewh15920\viewkind0
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 
-\f0\b\fs36 \cf0 Time-series streaming demo\
+\f0\fs72 \cf0 \ul \ulc0 Time-series cient and server demo
+\f1\b\fs36 \ulnone \
 \
 Programmer David G Messerschmitt\
-Last modified: 24 April 2018\
+Last modified: 19 May 2019\
 \
-This is a demonstration of remote access to a time-series based on a standard interface at the network level. This interface is based on two widely used and well supported open standards:\
+
+\f0\b0\fs48 \ul Concept
+\f1\b\fs36 \ulnone \
+\
+This is a demonstration of remote access to a time-series based on a standard interface at the network level. This interface is based on two widely used and well-supported open standards:\
 \
 \pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
 \ls1\ilvl0\cf0 {\listtext	
-\f1 \uc0\u10003 
-\f0 	}gRPC: a remote procedure call (RPC) interface\
+\f2 \uc0\u10003 
+\f1 	}gRPC: a remote procedure call (RPC) interface (originally the basis for most of Google\'92s internal distributed computing, but since donated to the open source community)\
 {\listtext	
-\f1 \uc0\u10003 
-\f0 	}JSON: standard representation of a map (key-value) data structure\
+\f2 \uc0\u10003 
+\f1 	}JSON: standard textual representation of a map (key-value) data structure (orignally the standard for platform-indepenent data transfer in JavaScript, but now used very widely)\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 \cf0 \
-Both gRPC and JSON are specifically designed to be platform- and language-independent. gRPC provides an internet transport for both time-series metadata and the time-series values. All metadata is represented by JSON strings carried by gRPC.\
+Both gRPC and JSON are specifically designed to be platform- and language-independent, and both are almost universally supported and used. gRPC provides an internet transport for both time-series metadata and the time-series values. All metadata is represented by JSON strings transported by gRPC.\
 \
-Although the client and server can be implemented in different languages on different platforms, this is a Python implementation of both client and server. In the future, it would make sense to retain the Python implementations but implement just time-series generators in other languages (like C++ or Matlab). Anticipating this, we have separated the implementation of time-series generators and receptors from the server and client implementations.\
+Although the client and server can be implemented in different languages on different platforms, what we have right now is a Python wrapper built around gRPC and JSON, which allows new server and client capability to be added easily as Python code at both ends without knowledge of either gRPC or JSON. This code has only been tested on MacOS, but it should run fine on other platforms as well.\
 \
-The time-series model supported is quite general. The common thread is that a sequence of values is indexed by a single time variable. The values can be real- or complex-valued samples, or vectors or matrices or higher-dimensional entities. Also supported is a set of parallel time-series, synchronous with one another but possibly with different sampling rates. In the future it should be possible to extend this to asynchronous time-series.\
+In the future, it would make sense to retain the Python implementation of a wrapper but implement just time-series generators in other languages (like C++ or Matlab or Mathematica). Anticipating this, we have separated the implementation of time-series generators and receptors (which generate and consume signals and metadata) from generic server and client implementations that depend on gRPC transport.\
 \
-Running the demo:\
+The time-series model supported is quite general. The common thread is that a sequence of values is indexed by a single time index. The values can be real- or complex-valued samples, or vectors or matrices or higher-dimensional entities. Also supported is a set of parallel time-series, synchronous with one another but possibly with different sampling rates. In the future it should be possible to extend this to asynchronous time-series.\
 \
-The demo currently runs in two processes on a localhost. Instantiate two terminal windows. In the first run\
+
+\f0\b0\fs48 \ul Demo
+\f1\b\fs36 \ulnone \
 \
-idle3 time_series_server.py\
+Presuming that you have downloaded the demo from its github repositiory:\
 \
-and execute the code in the server window. In the second run\
+You will have to install the gRPC packages:\
 \
 \pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
-\cf0 idle3 time_series_client.py\
-\
-and execute the code in the client window. Each of client and server will write to its respective shell window indicating what it is doing.  The client will start by displaying a list of time-series generators that are currently available from the server, and ask which one you wish to choose. It will then display a set of metadata parameters, which are sufficient to configure a receptor coordinated with that generator. The client will finish with a printout and plot of a signal that was generated in the server and conveyed to the client by gRPC.\
+\cf0 python3 -m pip install --user grpcio\
+python3 -m pip install --user grpcio-tools\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 \cf0 \
-To implement new types of time-series, new coordinated classes can easily be added to time_series_generators.py and time_series_receptors.py. This is structured so that adding new time-series does not involve modifications to the time-series server and client, nor does it require knowledge of gRPC or JSON. Neither does it require any knowledge of the corresponding generator beyond what metadata parameters it uses.\
+The demo currently runs in two processes on a localhost. (It should be easy to run server and client on different hosts across the internet, but we haven\'92t demonstrated that.)  In one terminal window start the server:\
 \
-The following is a list of files and their purpose:\
+python3 time_series_server.py\
+\
+This will allow the server to be accessed repeatedly. Note that the server incorporates a timeout, so after a while you may have to restart the server. In a second terminal window (so it is a separate process) execute the client:\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf0 python3 time_series_client.py\
+\
+Each of client and server will write to its respective shell window indicating what it is doing.  The client will start by displaying a list of time-series generators that are currently available from the server, and ask which one you wish to choose. It will then display a set of metadata parameters, which are sufficient to configure a receptor coordinated with that generator. The client will finish with a printout and plots showing the results.\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+To implement new types of time-series, new classes can easily be added to time_series_generators.py and time_series_receptors.py.  If you just want a new client that accesses an existing server (like adds some more computation to the results) then you can add a new class to time_series_receptors.py. You can implement a totally new functionality by adding coordinated classes to both time_series_generators.py and time_series_receptors.py.\
+\
+The python wrapper to gRPC allows you to add new capabilities and new time-series with no modifications to  time_series_server.py or  time_series_client.py, nor does it require any knowledge of gRPC or JSON.\
+\
+
+\f0\b0\fs48 \ul Files in the repository
+\f1\b\fs36 \ulnone \
 \
 Signal generation and reception (edit these to add new time-series generators/receptors):\
 \
 \pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
 \ls2\ilvl0\cf0 {\listtext	
-\f1 \uc0\u9642 
-\f0 	}time_series_generators.py (server side)\
+\f2 \uc0\u9642 
+\f1 	}time_series_generators.py (server side generation of signals and metadata)\
 {\listtext	
-\f1 \uc0\u9642 
-\f0 	}time_series_receptors.py (client side)\
+\f2 \uc0\u9642 
+\f1 	}time_series_receptors.py (client side access and processing of signals and metadata)\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 \cf0 \
-(The following files should not require editing.)\
+The remaining files do not require editing to add new generator and receptor capabilities.\
 \
 Discovery, configuration, and streaming (execute these files with python3 in separate processes in order to run the demo):\
 \
 \pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
 \ls3\ilvl0\cf0 {\listtext	
-\f1 \uc0\u9642 
-\f0 	}time_series_server.py\
+\f2 \uc0\u9642 
+\f1 	}time_series_server.py\
 {\listtext	
-\f1 \uc0\u9642 
-\f0 	}time_series_client.py\
+\f2 \uc0\u9642 
+\f1 	}time_series_client.py\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 \cf0 \
-Interface to gRPC services:\
+A Python3 interface to a set of gRPC services that are specific to transporting time series and their metadata:\
 \
 \pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
 \ls4\ilvl0\cf0 {\listtext	
-\f1 \uc0\u9642 
-\f0 	}generic_server.py\
+\f2 \uc0\u9642 
+\f1 	}generic_server.py\
 {\listtext	
-\f1 \uc0\u9642 
-\f0 	}generic_client.py\
+\f2 \uc0\u9642 
+\f1 	}generic_client.py\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 \cf0 \
 Class definitions in support of client and server functions:\
 \
 \pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
 \ls5\ilvl0\cf0 {\listtext	
-\f1 \uc0\u9642 
-\f0 	}parameters.py (store and manipulate metadata parameters)\
+\f2 \uc0\u9642 
+\f1 	}parameters.py (classes that store and manipulate metadata)\
 {\listtext	
-\f1 \uc0\u9642 
-\f0 	}buffer.py (a buffer between gRPC and signal generator/receptor)\
+\f2 \uc0\u9642 
+\f1 	}buffer.py (a buffer between gRPC and signal generator/receptor, that allows the client and server to generate and consume blocks of signal values according to what makes sense without dealing with the transport efficiency issues)\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 \cf0 \
-Definition of gRPC service. These files are compiled into Python code supporting gRPC:\
+Definition of gRPC services. These files are compiled into Python code supporting gRPC:\
 \
 \pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
 \ls6\ilvl0\cf0 {\listtext	
-\f1 \uc0\u9642 
-\f0 	}time_series_streaming.proto\
+\f2 \uc0\u9642 
+\f1 	}time_series_streaming.proto\
 {\listtext	
-\f1 \uc0\u9642 
-\f0 	}PROTO_DEFINITIONS.py\
+\f2 \uc0\u9642 
+\f1 	}PROTO_DEFINITIONS.py\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 \cf0 \
-Compile .proto file:\
+The .proto file defines the general signal types that we use in gRPC to stream signals and transfer metadata. It should not be necessary to change these definitions, but if they are changed you will have to compile time_series_streaming.proto by executing the Python3 code:\
 \
 \pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
 \ls7\ilvl0\cf0 {\listtext	
-\f1 \uc0\u9642 
-\f0 	}run_codegen.py\
+\f2 \uc0\u9642 
+\f1 	}run_codegen.py\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 \cf0 \
-Resulting code-generated files:\
+The resulting code-generated files are automatically generated from time_series_streaming.proto and should never be edited:\
 \
 \pard\tx220\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\li720\fi-720\pardirnatural\partightenfactor0
 \ls8\ilvl0\cf0 {\listtext	
-\f1 \uc0\u9642 
-\f0 	}time_series_streaming_pb2.py\
+\f2 \uc0\u9642 
+\f1 	}time_series_streaming_pb2.py\
 {\listtext	
-\f1 \uc0\u9642 
-\f0 	}time_series_streaming_pb2_grpc.py\
+\f2 \uc0\u9642 
+\f1 	}time_series_streaming_pb2_grpc.py\
 \pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
 \cf0 \
 \

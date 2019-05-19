@@ -302,14 +302,13 @@ class SigMFfileBrowser():
 
         t = {}
 
-        # No attempt to make the path platform-independent
-        t['directory_path'] = {
-            'description':'path to access the repository of SigMF files',
-              'default':'/Users/messer/Documents/Moved from Google Drive/Python/ATA SigMF'
+        t['directory'] = {
+            'description':'directory containing repository of SigMF files',
+              'default':'data'
                       }
 
         t['file_name'] = {
-            'description':'name of specific SigMF file',
+            'description':'name of SigMF signal data file',
               'default':'rosetta-2010-06-04.sigmf-data'
                       }
           
@@ -336,14 +335,20 @@ class SigMFfileBrowser():
         #   attributes storing parameter values chosen by the client;
         #   for example parameter 'frame' has been stored as attribute self.frame
 
-        os.chdir(self.directory_path)
-        self.file_map = np.memmap(self.file_name,dtype=np.byte)
+        # we assume data files are stored in a subdirectory
+        #   of the python code being executed
+        # change current directory code directory
+        os.chdir(os.path.dirname(os.path.realpath(__file__)))
+        # file relative path to data file
+        self.file_path = os.path.join(self.directory,self.file_name)
+        
+        # Map the file for easy access to the data  
+        self.file_map = np.memmap(self.file_path,dtype=np.byte)
 
-        # No check of indexes against file length yet but this will be useful
-        #   for that purpose
+        # Useful for checking file indexes against file length
         self.total_file_length = self.file_map.size
 
-        # Keep track of number of calls
+        # Track number of calls
         self.call_count = 0
 
         # transport parameters returned to client for its configuration
@@ -399,13 +404,13 @@ class SigMFfilePeriodogram():
         t = {}
 
         # No attempt to make the path platform-independent
-        t['directory_path'] = {
-            'description':'path to access the repository of SigMF files',
-            'default':'/Users/messer/Documents/Moved from Google Drive/Python/ATA SigMF'
+        t['directory'] = {
+            'description':'directory containing the repository of SigMF files',
+            'default':'data'
                       }
 
         t['file_name'] = {
-            'description':'name of specific SigMF file',
+            'description':'name of specific SigMF signal data file',
             'default':'rosetta-2010-06-04.sigmf-data'
                       }
           
@@ -432,14 +437,20 @@ class SigMFfilePeriodogram():
         #   attributes storing parameter values chosen by the client;
         #   for example parameter 'frame' has been stored as attribute self.frame
 
-        os.chdir(self.directory_path)
-        self.file_map = np.memmap(self.file_name,dtype=np.byte)
-
-        # No check of indexes against file length yet but this will be useful
-        #   for that purpose
+        # we assume data files are stored in a subdirectory
+        #   of the python code being executed
+        # change current directory code directory
+        os.chdir(os.path.dirname(os.path.realpath(__file__)))
+        # file relative path to data file
+        self.file_path = os.path.join(self.directory,self.file_name)
+        
+        # Map the file for easy access to the data  
+        self.file_map = np.memmap(self.file_path,dtype=np.byte)
+        
+        # Useful for checking file indexes against file length
         self.total_file_length = self.file_map.size
 
-        # Keep track of number of calls
+        # Track the number of calls
         self.call_count = 0
 
         # transport parameters returned to client for its configuration
@@ -476,7 +487,7 @@ class SigMFfilePeriodogram():
             self.f, self.PS = \
                signal.welch(self.datavals_real + 1j*self.datavals_imag,scaling='spectrum')
 
-            print('Debug: Periodogram array sizes', self.f.size, self.PS.size)
+            print('Periodogram array sizes', self.f.size, self.PS.size)
             
             self.call_count += 1
 
